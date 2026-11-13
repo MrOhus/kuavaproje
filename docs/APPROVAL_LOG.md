@@ -4,11 +4,22 @@
 
 ## Active Entry
 
+_No active entry. The next pipeline stage (solution-architect) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Requirement Analysis — Round 1 altitude simulation (Approved 13.11.2026)
+
 - **Status**: Approved
 - **Stage**: Requirement Analysis
 - **Session Started**: 2026-11-13
 - **Related Doc(s)**: docs/design/DESIGN.md
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #1 (`docs/round1-altitude-sim-requirements`), merge commit `5007652` on `main`
 - **Decisions / Scope Covered**:
   - Round 1 scope limited to: fixed-time-step, 1-D altitude simulation of a drone with gravity, mass, thrust limits and drag; step rate ≥ 200 Hz; fully deterministic; no controller. Everything else explicitly out of scope (listed in DESIGN.md).
   - US-1 Configure the simulation: mass > 0; gravity configurable (default 9.81 m/s²); max thrust configurable and ≥ 0; min thrust fixed at 0; drag coefficient ≥ 0; initial altitude/velocity configurable (default 0/0); all values finite; step rate not configurable.
@@ -47,9 +58,3 @@
   - OQ-25 — Maximum thrust 0 N allowed.
 - **Approved By**: Ohus
 - **Approval Date**: 13.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
