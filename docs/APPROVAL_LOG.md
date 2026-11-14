@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Implementation — US-3 Compute vertical dynamics from gravity, thrust and drag
+_No active entry. The next pipeline stage (implementation) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Implementation — US-3 Compute vertical dynamics from gravity, thrust and drag (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Implementation
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (pass 2026-11-14, US-3). Input: docs/design/DESIGN.md (US-3, approved 13.11.2026), docs/architecture/ARCHITECTURE.md (approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #6 (`feature/us3-vertical-dynamics`), merge commit `2c38ff7` on `main`
 - **Decisions / Scope Covered**:
   - US-3 implemented: D-3 step formulation (semi-implicit Euler, linear drag from the start velocity), silent thrust capping to [0, max_thrust] at use time, thrust command checks before any change, D-4 floor (`hn <= 0 and vn < 0`).
   - Red tests committed before code (`1f5fad7`). 142 passed, 12 strict xfail (IQ-1, IQ-2, and 7 US-3 record-field tests waiting for US-6). No planted-bug check (operator instruction).
@@ -18,12 +27,6 @@
 - **Open Questions Resolved This Session**: none raised
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Implementation — US-2 Advance the simulation in fixed time steps (Approved 14.11.2026)
 
