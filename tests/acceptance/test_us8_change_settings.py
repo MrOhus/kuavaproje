@@ -13,9 +13,6 @@ import pytest
 
 from kuava_sim import SimConfig, Simulation
 
-needs_us9 = pytest.mark.xfail(
-    strict=True, reason="IQ-9: needs the controlled step from US-9; remove when US-9 lands"
-)
 needs_us10 = pytest.mark.xfail(
     strict=True, reason="IQ-9: needs step_metrics() from US-10; remove when US-10 lands"
 )
@@ -79,7 +76,6 @@ def test_gain_change_leaves_earlier_records_unchanged():
     assert [struct.pack("<6d", *r) for r in sim.records[:101]] == before
 
 
-@needs_us9
 def test_new_gain_is_used_from_the_next_step():
     sim = controlled()
     sim.run(100)
@@ -102,7 +98,6 @@ def test_setpoint_can_be_changed_and_is_reported_back():
     assert sim.controller.setpoint == 20.0
 
 
-@needs_us9
 def test_after_a_setpoint_change_the_drone_works_toward_the_new_setpoint():
     sim = controlled()
     sim.run(4000)  # settle near 10 m
@@ -125,7 +120,6 @@ def test_a_setpoint_change_starts_a_new_metrics_result_at_that_record():
 # --- Scenario: Changing Ki affects only the future ----------------------------
 
 
-@needs_us9
 def test_changing_ki_keeps_the_integral_and_stops_its_growth():
     sim = controlled()
     sim.run(300)

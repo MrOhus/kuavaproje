@@ -232,6 +232,8 @@ class Simulation:
         self._reject_manual_thrust(thrust)
         if thrust is not None:
             self._held_thrust = _finite_float("thrust", thrust)
+        if self._ctrl_on:
+            self._control()
         return Record(*self._advance())
 
     def run(self, n: int, thrust=None) -> None:
@@ -247,8 +249,28 @@ class Simulation:
             return
         if thrust is not None:
             self._held_thrust = thrust
-        for _ in range(n):
-            self._advance()
+        if self._ctrl_on:
+            for _ in range(n):
+                self._control()
+                self._advance()
+        else:
+            for _ in range(n):
+                self._advance()
+
+    def _control(self) -> None:
+        """Set the held thrust to the PID command (ARCHITECTURE_3dbd8e9.md).
+
+        Integral first (D-10), then this exact grouping, so that at the
+        setpoint, at rest and with no integral the command is exactly m*g.
+        """
+        data = self._data
+        h, v = data[-5], data[-4]
+        e = self._setpoint - h
+        self._integral = self._integral + (self._ki * e) * DT
+        cfg = self._config
+        self._held_thrust = (
+            (cfg.mass * cfg.gravity + self._kp * e) + self._integral
+        ) - self._kd * v
 
     def _advance(self) -> tuple:
         """One fixed step, exactly as ARCHITECTURE.md D-3 and D-4 specify.
