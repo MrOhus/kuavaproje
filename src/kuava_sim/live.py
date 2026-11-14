@@ -44,6 +44,18 @@ class LiveSession:
     def sim(self) -> Simulation:
         return self._sim
 
+    def set_gain(self, name: str, value) -> None:
+        """A gain slider moved: use the new gain from the next step (no metrics row)."""
+        value = float(value)
+        self._sim.set_gains(**{name: value})
+        self.values[name] = value
+
+    def release_setpoint(self, value) -> None:
+        """The setpoint slider was let go: one setpoint change, unless it is unchanged."""
+        value = float(value)
+        self._sim.set_setpoint(value)  # the same value again does nothing (OQ-33)
+        self.values["setpoint"] = value
+
     def tick(self, now: float) -> int:
         """Take the steps due by the wall clock (pacing predicate); return how many."""
         sim = self._sim
