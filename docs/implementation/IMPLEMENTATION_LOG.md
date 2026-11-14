@@ -4,6 +4,142 @@ Append one entry per implementation pass (one story per pass), **most recent fir
 
 ---
 
+## Pass: 2026-11-14 — US-5 Open-loop thrust input (no controller)
+
+**Branch:** `feature/us5-open-loop-thrust` (from `feature/us4-deterministic-runs`, see IQ-8)
+**Traces to:** `docs/design/DESIGN.md` (US-5), `docs/architecture/ARCHITECTURE.md` (Entity: Simulation — raw held command capped at use time, all-or-nothing command checks, `step(thrust)` / `run(n, thrust)` semantics; decision D-6)
+**Approval basis:** Requirement Analysis entry approved 13.11.2026; Solution Architecture entry approved 14.11.2026 (see `docs/APPROVAL_LOG.md`)
+**Mode:** done while the operator was away, under their pre-approval of the Git plan up to the code commit. Real decisions used the recommended option, marked awaiting operator confirmation; all were later confirmed (IQ-4 to IQ-8 "a"). Nothing was signed, pushed or merged.
+
+**Files:** `tests/acceptance/test_us5_thrust_input.py`. No production code changed.
+**Red proof:** there was no red phase. The tests pass against the existing code, because holding, capping and rejecting thrust commands already came with US-2, US-3 and US-6 (IQ-4, applied as for US-4). The tests were committed in `9ae263c` before any production code. `git diff main -- src/` on this branch is empty. Five faults were planted in scratch copies of the code (not committed), and the US-5 tests caught all five:
+
+| Planted fault | Caught by (failing tests) |
+|---|---|
+| Command not held (falls back to 0 after each step) | 34 tests in 8 test functions |
+| Held command starts at 1 N | `test_held_thrust_command_starts_at_zero` |
+| Rejected command still replaces the held command | `test_rejected_command_does_not_replace_the_held_command` (all 5 cases) |
+| Hidden controller adds 1 N while falling | 15 tests in 6 test functions, including `test_simulation_does_not_react_to_its_own_state` |
+| Capping applied only on the step that gave the command | `test_held_command_outside_limits_keeps_being_limited` |
+
+**Result:** 228 passed, 0 xfailed (full suite, US-4 and US-5 included). Python 3.15.2, pytest 9.2.0.
+
+### Acceptance Criteria Coverage
+
+All tests are in `tests/acceptance/test_us5_thrust_input.py`. "Thrust used" is read from the records.
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Held thrust command starts at 0 | ✅ Pass | `test_held_thrust_command_starts_at_zero` |
+| The last command is held when no new command is given | ✅ Pass | `test_last_command_is_held_when_no_new_command_is_given`, `test_run_applies_the_command_to_the_first_step_and_then_holds_it` |
+| A new command replaces the held command | ✅ Pass | `test_new_command_replaces_the_held_command`, `test_new_zero_command_replaces_the_held_command` |
+| A held command outside the limits keeps being limited | ✅ Pass | `test_held_command_outside_limits_keeps_being_limited`, `test_held_command_at_the_limits_is_used_the_same_on_every_step` (0 and 20 N, each ± one double) |
+| Commanded thrust within limits is applied regardless of state | ✅ Pass | `test_thrust_within_limits_is_used_exactly_whatever_the_state` (5 thrust values × 5 states: resting on the ground, on the ground moving up, falling fast, rising fast, about to land) |
+| The simulation does not react to its own state | ✅ Pass | `test_simulation_does_not_react_to_its_own_state` (1000 steps at 5 N; altitude falls every step) |
+| Rejected command does not replace the held command | ✅ Pass | `test_rejected_command_does_not_replace_the_held_command` (NaN, ±Inf, bool, str; via `step` and `run`) |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| `Simulation.held_thrust` | Starts at 0 N; the raw last accepted command is held (25 N and −3 N stay held as given) | Start and held-outside-limits tests |
+| Thrust capping | `T_used = min(max(held, 0), max_thrust)` on every step, not only the commanding one | Limits tests at 0 and max ± one double over 5 steps |
+| `step(thrust)` / `run(n, thrust)` | The command applies to the first step and is then held | Hold and replace tests |
+| All-or-nothing | A rejected command leaves the held command unchanged | Rejection tests |
+| No controller | Thrust used never depends on altitude or velocity | State-independence tests; the hidden-controller plant was caught |
+
+### Open Questions Raised This Pass
+
+IQ-4 (no red phase) applies to US-5 as well; see the US-4 pass. New this pass:
+
+| ID | Question | Status | Resolution |
+|---|---|---|---|
+| IQ-8 | US-4 is not signed yet, so its approval entry cannot move to History, the log allows only one active entry, and the US-4 docs stay uncommitted until sign-off. How should US-5 be set up? (a) **Recommended:** branch US-5 from the US-4 branch, skip the History-move commit for US-5, use one Pending entry covering both US-4 and US-5, and keep both stories' docs uncommitted in the working tree until the operator signs; (b) branch US-5 from `main` with its own Pending entry (two active entries, and the US-6 History move repeated on both branches); (c) wait for the operator before starting US-5. | Resolved | "IQ-8 a" (confirmed by the operator after the pass) |
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- No red phase and no production code for US-5: the behaviour already existed. The proof that the tests can fail comes from planted faults instead. Caused by IQ-4 (option a, confirmed by the operator).
+- Process: no History-move commit on this branch, the branch is stacked on the US-4 branch, and one Pending approval entry covers both stories. Caused by IQ-8 (option a, confirmed by the operator).
+
+### Version Control Actions
+
+- Branch: `feature/us5-open-loop-thrust` (from `feature/us4-deterministic-runs` at `fca3b74`)
+- Commits: `9ae263c` test(thrust): add US-5 open-loop thrust input acceptance tests (before any code; no code commit needed)
+- docs(implementation): log the US-4 and US-5 implementation passes (both entries and the shared signed approval entry)
+- PR: opened against `main` after the US-4 PR was merged, merged with a merge commit
+
+---
+
+## Pass: 2026-11-14 — US-4 Deterministic runs
+
+**Branch:** `feature/us4-deterministic-runs`
+**Traces to:** `docs/design/DESIGN.md` (US-4), `docs/architecture/ARCHITECTURE.md` (decisions D-2 plain floats, D-3 fixed formulation, D-7 separate-process byte comparison; Entity: Simulation — no wall-clock access, no global mutable state)
+**Approval basis:** Requirement Analysis entry approved 13.11.2026; Solution Architecture entry approved 14.11.2026 (see `docs/APPROVAL_LOG.md`)
+**Mode:** done while the operator was away, under their pre-approval of the Git plan up to the code commit. Real decisions used the recommended option, marked awaiting operator confirmation; all were later confirmed (IQ-4 to IQ-8 "a"). Nothing was signed, pushed or merged.
+
+**Files:** `tests/acceptance/test_us4_determinism.py`, `tests/acceptance/us4_scenario.py` (shared scenario, also run as a script). No production code changed.
+**Red proof:** there was no red phase. The tests pass against the existing code, because determinism already follows from US-2, US-3 and US-6 (IQ-4). The tests were committed in `fca3b74` before any production code. `git diff main -- src/` on this branch is empty. To show the tests can fail, four faults were planted in scratch copies of the code (not committed), and the US-4 tests caught all four:
+
+| Planted fault | Caught by |
+|---|---|
+| Time-based noise in the acceleration | all 5 tests |
+| Result depends on the process hash seed | `test_repeated_executions_in_separate_processes_give_identical_records` |
+| `run(n)` differs from n single steps | `test_single_steps_and_run_n_give_identical_records` |
+| Thrust command takes effect one step late | `test_changed_input_changes_output_only_from_that_step_on`, `test_single_steps_and_run_n_give_identical_records` |
+
+The first attempt at the time-noise fault was itself broken (on Windows `perf_counter_ns()` counts in steps of 100 ns, so `& 1` was always 0); it was fixed and rerun.
+
+**Result:** 185 passed, 0 xfailed (full suite). Python 3.15.2, pytest 9.2.0. The delay-and-load test takes about 5 s.
+
+### Acceptance Criteria Coverage
+
+All tests are in `tests/acceptance/test_us4_determinism.py`.
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Identical inputs yield identical outputs in one process | ✅ Pass | `test_identical_inputs_give_identical_records_in_one_process` (10000 steps, every record compared byte for byte; the scenario is checked to be non-trivial: capping and zeroing happen, the drone moves and stays airborne) |
+| Repeated executions yield identical outputs | ✅ Pass | `test_repeated_executions_in_separate_processes_give_identical_records` (IQ-5) |
+| Output does not depend on host timing or load | ✅ Pass | `test_records_do_not_depend_on_wall_clock_delays_or_load` (IQ-6) |
+| Single steps and "run N steps" give identical outputs | ✅ Pass | `test_single_steps_and_run_n_give_identical_records` (N = 1000) |
+| A changed input changes the output only from that step on | ✅ Pass | `test_changed_input_changes_output_only_from_that_step_on` (IQ-7) |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| D-2, D-3 | Same configuration and commands give the same bytes on the same machine | In-process and separate-process byte comparisons |
+| D-7 | The same script run twice with `subprocess`, output compared as bytes | Separate-process test (via the public records API, see IQ-5) |
+| `Simulation` | No wall-clock access | Delay test with real `time.sleep` pauses between steps |
+| `Simulation` | No global mutable state; independent instances | Two instances in one process; a busy thread running alongside |
+| Causality | A command affects only its own step and later steps | Changed-input test: records 0–499 byte-identical, every record from 500 on different |
+
+### Open Questions Raised This Pass
+
+All used the recommended option while the operator was away; the operator later confirmed every one.
+
+| ID | Question | Status | Resolution |
+|---|---|---|---|
+| IQ-4 | US-4 is already satisfied by the code from US-2, US-3 and US-6, so the tests cannot fail first and there is no code to write. How should the story be handled? (a) **Recommended:** commit the tests as usual, prove they can fail by planting faults in scratch copies, and make no code commit; (b) commit the tests without any proof that they can fail; (c) skip US-4 as already covered. | Resolved | "IQ-4 a" (confirmed by the operator after the pass) |
+| IQ-5 | How should the separate-process test run and compare? (a) **Recommended:** run `us4_scenario.py` twice as a script with `subprocess`, using different `PYTHONHASHSEED` values (1 and 2); the script writes all record bytes, built through the public records API, to stdout; compare the full bytes with each other and with an in-process run; (b) same, but compare SHA-256 digests only; (c) read the private `records._data.tobytes()` as ARCHITECTURE.md D-7 words it. | Resolved | "IQ-5 a" (confirmed by the operator after the pass) |
+| IQ-6 | What counts as "artificial wall-clock delays" and "host load"? (a) **Recommended:** 300 steps with a 5 ms `time.sleep` after each step, while a busy background thread competes for the interpreter (about 5 s); (b) delays only, as the AC literally says; (c) delays plus busy processes on every CPU core. | Resolved | "IQ-6 a" (confirmed by the operator after the pass) |
+| IQ-7 | What does "output records from step 500 onward differ" mean, and which thrust sequence is used? (a) **Recommended:** every record from 500 to the end differs, checked over 1000 steps with a fixed sequence (hover ± 3 N sine, held every 7th step, 35 N capped every 97th, −2 N zeroed every 131st) that keeps the drone airborne so the two runs never meet again at the floor; (b) only that the records from 500 on are not all identical. | Resolved | "IQ-7 a" (confirmed by the operator after the pass) |
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- No red phase and no production code for US-4: the behaviour already existed. The proof that the tests can fail comes from planted faults instead. Caused by IQ-4 (option a, confirmed by the operator).
+- The separate-process test builds the bytes through the public records API instead of reading `records._data.tobytes()` as ARCHITECTURE.md D-7 words it. Caused by IQ-5 (option a, confirmed by the operator).
+
+### Version Control Actions
+
+- Branch: `feature/us4-deterministic-runs` (from `main` at `b318805`)
+- Commits:
+  - `a143755` docs(approval): move US-6 implementation approval to history
+  - `fca3b74` test(determinism): add US-4 deterministic run acceptance tests (before any code; no code commit needed)
+- The docs for US-4 and US-5 (both log entries and the shared signed approval entry) are committed on the US-5 branch (IQ-8, a).
+- PR: opened against `main` and merged with a merge commit before the US-5 PR
+
+---
+
 ## Pass: 2026-11-14 — US-6 Output records
 
 **Branch:** `feature/us6-output-records`

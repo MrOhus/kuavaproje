@@ -4,7 +4,26 @@
 
 ## Active Entry
 
-_No active entry. The next pipeline stage (implementation) opens a new `Pending Approval` entry here._
+### Implementation — US-4 Deterministic runs and US-5 Open-loop thrust input
+
+- **Status**: Approved
+- **Stage**: Implementation
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (passes 2026-11-14, US-4 and US-5). Input: docs/design/DESIGN.md (US-4, US-5, approved 13.11.2026), docs/architecture/ARCHITECTURE.md (approved 14.11.2026)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - US-4 covered by acceptance tests (`fca3b74`, branch `feature/us4-deterministic-runs`). No production code was needed; determinism already follows from US-2/3/6. 4 of 4 planted faults caught in scratch copies.
+  - US-5 covered by acceptance tests (`9ae263c`, branch `feature/us5-open-loop-thrust`, stacked on the US-4 branch). No production code was needed; holding, capping and rejecting commands already exist. 5 of 5 planted faults caught.
+  - Full suite: 228 passed. `git diff main -- src/` is empty on both branches.
+  - One entry covers both stories because US-4 could not be signed before US-5 started (IQ-8). Done while the operator was away. Nothing signed, pushed or merged.
+- **Open Questions Resolved This Session**:
+  - IQ-4 — No red phase possible: tests committed, falsifiability shown with planted faults, no code commit (option a).
+  - IQ-5 — Separate-process test runs the scenario script twice with different hash seeds and compares full record bytes from the public API (option a).
+  - IQ-6 — Host load is 300 steps with 5 ms pauses plus a busy background thread (option a).
+  - IQ-7 — Every record from step 500 on must differ, with a sequence that keeps the drone airborne (option a).
+  - IQ-8 — US-5 stacked on the US-4 branch, one shared Pending entry, docs uncommitted until sign-off (option a).
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
 
 ---
 
