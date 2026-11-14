@@ -14,3 +14,6 @@
 | IQ-1: A test needs features from later stories | What to do with a test that can't pass yet | Mark it "expected to fail". It warns me when it starts passing, so I don't forget it. |
 | A planted bug was not caught | Breaking the code on purpose to see if the tests notice | The test only checked for the word "mass", so it passed on the wrong error. Made it stricter to check "greater than 0" too. |
 | IQ-4: What if a story's tests pass before any code is written? | No red phase is possible because earlier code already does the job | Break the code on purpose and show the tests catch it. Proves the tests can fail. |
+| OQ-27: Hover feed-forward? | Give the drone its hover thrust for free, PID only corrects | Yes. Otherwise the PID has to learn the weight and the drone sags at first. |
+| OQ-28: Derivative on error or on altitude? | What the D part looks at | Altitude. On error, a setpoint change causes a one-step thrust spike (derivative kick). |
+| OQ-30: Metric definitions | How rise time, overshoot, settling time and steady-state error are measured | python-control's: rise 10% to 90%, settle within 2% for good, overshoot past the final value, error = setpoint minus final altitude. |

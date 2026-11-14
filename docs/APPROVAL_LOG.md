@@ -4,7 +4,30 @@
 
 ## Active Entry
 
-_No active entry. The next pipeline stage (requirement analysis, Round 2) opens a new `Pending Approval` entry here._
+### Requirement Analysis — Round 2 PID altitude controller
+
+- **Status**: Approved
+- **Stage**: Requirement Analysis
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/design/DESIGN_0bfd04e.md (linked from docs/design/DESIGN.md)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - Round 2 scope: PID controller with Kp, Ki, Kd and setpoint changeable while running; rise time, overshoot (%), settling time and steady-state error after every setpoint change; match with python-control `step_info` within 2 %.
+  - Out of scope: GUI, plots, wind/disturbances, pause and reset, anti-windup, sensor noise (wind, pause, reset and plots planned for Round 3 with the GUI).
+  - US-7 … US-11 written with full Gherkin ACs (happy and rejection paths); no BLOCKED scenarios remain.
+  - Five items deferred to solution-architect (listed in DESIGN_0bfd04e.md): exact discrete controller step, zero-size step metrics, "within 2 %" when the reference is 0 or NaN, continuous model vs the 200 Hz simulation, turning on while already on.
+- **Open Questions Resolved This Session**:
+  - OQ-26 — Compare with step_info on the same signal always, and with a python-control closed-loop model where no thrust limit is hit and the ground is not touched (option c).
+  - OQ-27 — Thrust = m·g feed-forward + PID output, then capped (option a).
+  - OQ-28 — Every step; derivative on altitude (−Kd·v); integral accumulates Ki·e·dt (option a).
+  - OQ-29 — A result covers its change up to the next change, readable at any time, last sample as the final value (option a).
+  - OQ-30 — step_info definitions on altitude relative to the change; steady-state error = setpoint − final altitude; never reached = NaN (option a).
+  - OQ-31 — Controller optional; manual thrust rejected while on; turning off returns Round 1 behaviour (option a).
+  - OQ-32 — Turning on requires a setpoint and counts as the first setpoint change (option a).
+  - OQ-33 — Gains ≥ 0, setpoint ≥ 0 m, no upper limit; a repeat setpoint does nothing; gain changes never start new metrics (option a).
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
+
 
 ---
 
