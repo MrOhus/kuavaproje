@@ -7,6 +7,7 @@ Central index of requirement analysis output for this repository. Individual ses
 | File | Scope / Topic | Started (commit) | Status |
 |---|---|---|---|
 | (this file) | Core: Round 1 — deterministic fixed-step altitude simulation | 74c72ce | Active |
+| [DESIGN_0bfd04e.md](DESIGN_0bfd04e.md) | Round 2 — PID altitude controller and step-response metrics (US-7 … US-11, OQ-26 … OQ-33) | 0bfd04e | Active |
 
 ## Scope — Round 1
 

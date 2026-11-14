@@ -4,13 +4,45 @@
 
 ## Active Entry
 
-### Implementation — US-4 Deterministic runs and US-5 Open-loop thrust input
+### Requirement Analysis — Round 2 PID altitude controller
+
+- **Status**: Approved
+- **Stage**: Requirement Analysis
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/design/DESIGN_0bfd04e.md (linked from docs/design/DESIGN.md)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - Round 2 scope: PID controller with Kp, Ki, Kd and setpoint changeable while running; rise time, overshoot (%), settling time and steady-state error after every setpoint change; match with python-control `step_info` within 2 %.
+  - Out of scope: GUI, plots, wind/disturbances, pause and reset, anti-windup, sensor noise (wind, pause, reset and plots planned for Round 3 with the GUI).
+  - US-7 … US-11 written with full Gherkin ACs (happy and rejection paths); no BLOCKED scenarios remain.
+  - Five items deferred to solution-architect (listed in DESIGN_0bfd04e.md): exact discrete controller step, zero-size step metrics, "within 2 %" when the reference is 0 or NaN, continuous model vs the 200 Hz simulation, turning on while already on.
+- **Open Questions Resolved This Session**:
+  - OQ-26 — Compare with step_info on the same signal always, and with a python-control closed-loop model where no thrust limit is hit and the ground is not touched (option c).
+  - OQ-27 — Thrust = m·g feed-forward + PID output, then capped (option a).
+  - OQ-28 — Every step; derivative on altitude (−Kd·v); integral accumulates Ki·e·dt (option a).
+  - OQ-29 — A result covers its change up to the next change, readable at any time, last sample as the final value (option a).
+  - OQ-30 — step_info definitions on altitude relative to the change; steady-state error = setpoint − final altitude; never reached = NaN (option a).
+  - OQ-31 — Controller optional; manual thrust rejected while on; turning off returns Round 1 behaviour (option a).
+  - OQ-32 — Turning on requires a setpoint and counts as the first setpoint change (option a).
+  - OQ-33 — Gains ≥ 0, setpoint ≥ 0 m, no upper limit; a repeat setpoint does nothing; gain changes never start new metrics (option a).
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
+
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Implementation — US-4 Deterministic runs and US-5 Open-loop thrust input (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Implementation
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (passes 2026-11-14, US-4 and US-5). Input: docs/design/DESIGN.md (US-4, US-5, approved 13.11.2026), docs/architecture/ARCHITECTURE.md (approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #8 (`feature/us4-deterministic-runs`, merge commit `05cf2db`) and PR #9 (`feature/us5-open-loop-thrust`, merge commit `0bfd04e`) on `main`
 - **Decisions / Scope Covered**:
   - US-4 covered by acceptance tests (`fca3b74`, branch `feature/us4-deterministic-runs`). No production code was needed; determinism already follows from US-2/3/6. 4 of 4 planted faults caught in scratch copies.
   - US-5 covered by acceptance tests (`9ae263c`, branch `feature/us5-open-loop-thrust`, stacked on the US-4 branch). No production code was needed; holding, capping and rejecting commands already exist. 5 of 5 planted faults caught.
@@ -24,12 +56,6 @@
   - IQ-8 — US-5 stacked on the US-4 branch, one shared Pending entry, docs uncommitted until sign-off (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Implementation — US-6 Output records (Approved 14.11.2026)
 
