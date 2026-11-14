@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Implementation — US-2 Advance the simulation in fixed time steps
+_No active entry. The next pipeline stage (implementation) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Implementation — US-2 Advance the simulation in fixed time steps (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Implementation
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (pass 2026-11-14, US-2). Input: docs/design/DESIGN.md (US-2, approved 13.11.2026), docs/architecture/ARCHITECTURE.md (approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #5 (`feature/us2-fixed-time-steps`), merge commit `615d5d4` on `main`
 - **Decisions / Scope Covered**:
   - US-2 implemented: `step(thrust=None)`, `run(n, thrust=None)`, `step_count`, drift-free `time = step_count / 200`, N checks before any change, `run(0)` a pure no-op, no step-length option, no wall-clock use.
   - Red tests committed before code (`7583605`). 105 passed, 5 strict xfail (IQ-1, IQ-2). No planted-bug check (operator instruction).
@@ -19,12 +28,6 @@
   - IQ-2 — US-2 implements only its own part; the record comparisons are strict xfail until US-6; dynamics come in US-3 (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Implementation — US-1 Configure the simulation (Approved 14.11.2026)
 
