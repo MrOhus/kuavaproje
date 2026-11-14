@@ -13,9 +13,6 @@ import pytest
 
 from kuava_sim import SimConfig, Simulation
 
-needs_us9 = pytest.mark.xfail(
-    strict=True, reason="IQ-9: needs the controlled step from US-9; remove when US-9 lands"
-)
 needs_us10 = pytest.mark.xfail(
     strict=True, reason="IQ-9: needs step_metrics() from US-10; remove when US-10 lands"
 )
@@ -173,7 +170,6 @@ def test_turning_on_counts_as_the_first_setpoint_change():
 # --- Scenario: Taking off from the ground under control -----------------------
 
 
-@needs_us9
 def test_taking_off_from_the_ground_under_control():
     sim = make(gravity=9.81, initial_altitude=0.0)
     enable(sim, kp=4.0, ki=0.0, kd=3.0, setpoint=10.0)
@@ -218,7 +214,6 @@ def test_turning_off_accepts_manual_commands_again():
     assert record.thrust_used == 12.0
 
 
-@needs_us9
 def test_turning_off_keeps_the_last_controller_command_as_held_thrust():
     sim = make(gravity=9.81, max_thrust=30.0, initial_altitude=5.0)
     enable(sim)
