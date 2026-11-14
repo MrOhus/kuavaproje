@@ -4,7 +4,21 @@
 
 ## Active Entry
 
-_No active entry. The next pipeline stage (implementation, gain-slider fix) opens a new `Pending Approval` entry here._
+### Implementation — Fix: gain sliders while the window is not drawn (US-13)
+
+- **Status**: Approved
+- **Stage**: Implementation
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (pass "Fix: gain sliders while the window is not drawn"). Input: docs/design/DESIGN_f351eee.md US-13 (approved 14.11.2026), docs/architecture/ARCHITECTURE_899eaea.md (approved 14.11.2026)
+- **Requested By**: Human operator (Ohus), after the pre-submission check
+- **Decisions / Scope Covered**:
+  - Gain sliders apply from the next step even when the window is not drawn; they use a Tk variable with a write trace instead of the Scale command (`362a81d` red, `9cb5cdb` fix).
+  - Window tests that need mouse or key events skip with the reason shown when the window is not visible, as AQ-21 (`cc72708`, operator-approved test change; six tests, see the log).
+  - History move of the Round 3 implementation entry; all design and architecture index rows marked Merged (`2ae838b`).
+  - Full suite: 479 passed (visible window). With the test window hidden: 472 passed, 7 skipped with the reason, 0 failed.
+- **Open Questions Resolved This Session**: none raised
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
 
 ---
 
