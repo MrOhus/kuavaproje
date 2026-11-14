@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Solution Architecture — Round 1 altitude simulation
+_No active entry. The next pipeline stage (implementation) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Solution Architecture — Round 1 altitude simulation (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Solution Architecture
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/architecture/ARCHITECTURE.md. Input: docs/design/DESIGN.md (History entry "Requirement Analysis — Round 1 altitude simulation", Approved 13.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #3 (`docs/round1-altitude-sim-architecture`), merge commit `ecb127c` on `main`
 - **Decisions / Scope Covered**:
   - Entities: constants (`STEP_RATE_HZ`, `DT`, `MIN_THRUST`, `DEFAULT_GRAVITY`), `SimConfig` (frozen, validated), `Record`, `RecordLog` (flat `array('d')`), `Simulation` (`step(thrust=None)`, `run(n, thrust=None)`), each with types and units, invariants, boundary behavior and concurrency analysis.
   - D-1 CPython `>= 3.12`, developed on 3.15.2; standard library only at runtime.
@@ -31,12 +40,6 @@
   - AQ-6 — `step(thrust)` / `run(n, thrust)` with built-in error types naming the setting (option a) → D-6.
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Requirement Analysis — Round 1 altitude simulation (Approved 13.11.2026)
 
