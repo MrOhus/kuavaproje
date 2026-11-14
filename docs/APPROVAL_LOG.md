@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Implementation — US-1 Configure the simulation
+_No active entry. The next pipeline stage (implementation) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Implementation — US-1 Configure the simulation (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Implementation
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (pass 2026-11-14, US-1). Input: docs/design/DESIGN.md (US-1, approved 13.11.2026), docs/architecture/ARCHITECTURE.md (approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #4 (`feature/us1-configure-simulation`), merge commit `15cac03` on `main`
 - **Decisions / Scope Covered**:
   - US-1 implemented: constants, validated immutable `SimConfig`, `Simulation` construction with read-only step rate, step length, minimum thrust and held thrust.
   - 86 acceptance tests pass, 1 strict xfail (IQ-1). 18 of 18 planted bugs caught.
@@ -19,11 +28,6 @@
   - IQ-1 — The 200-step part of "Maximum thrust of 0 N is accepted" stays in US-1 as a strict xfail until US-2/3/5/6 land (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Solution Architecture — Round 1 altitude simulation (Approved 14.11.2026)
 
