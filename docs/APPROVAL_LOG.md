@@ -4,13 +4,44 @@
 
 ## Active Entry
 
-### Implementation — US-7 … US-11 PID controller and step-response metrics (Round 2)
+### Requirement Analysis — Round 3 live GUI, wind gust, pause and reset
+
+- **Status**: Approved
+- **Stage**: Requirement Analysis
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/design/DESIGN_f351eee.md (linked from docs/design/DESIGN.md)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - Round 3 scope: simple desktop GUI running the simulation live with the PID controller; sliders for Kp, Ki, Kd and the setpoint; live plots of setpoint, altitude and controller output above 30 fps; metrics after each setpoint change; wind gust button; pause and reset; README with setup and metric definitions; one start command and one test command; clear error messages instead of crashes.
+  - Out of scope: all bonus items, and everything out of scope in Rounds 1 and 2 unless named above.
+  - US-12 … US-19 written with full Gherkin ACs (happy and rejection paths); no BLOCKED scenarios remain.
+  - Deferred to solution-architect (listed in DESIGN_f351eee.md): GUI and plotting technology, how the GUI drives the simulation, the split of gust/pause/reset between core and GUI, when the app counts as behind (most steps per frame), how the frame rate is measured in tests, whether and how the gust appears in the records and the core API.
+- **Open Questions Resolved This Session**:
+  - OQ-34 — Real time; whole 200 Hz steps per frame; when behind, drop the missed time instead of jumping ahead (option a).
+  - OQ-35 — One gust button: 5 N downward for 0.5 s (100 steps); a press during a gust restarts it; part of the simulation core (option a).
+  - OQ-36 — Slider ranges Kp 0–50, Ki 0–20, Kd 0–20, setpoint 0–100 m, step 0.1, start 4/1/3/10 m; fixed drone 1 kg, drag 0.5, max 30 N, from the ground; controller always on; setpoint applies on release only (option a).
+  - OQ-37 — Pause/Resume button; sliders work while paused; gust disabled while paused; reset to time 0 keeps the slider values and the pause state (option a).
+  - OQ-38 — Two plots, last 20 s scrolling: altitude and setpoint; thrust actually used with 0 N and 30 N limits; all records kept, reset clears them (option a).
+  - OQ-39 — Metrics table, one row per setpoint change, newest on top, newest row live, NaN shown as "not reached" (option a).
+  - OQ-40 — Frame rate shown in the window; automated 5 s test on the average (> 30 fps); one slow frame does not fail it (option a).
+  - OQ-41 — Plain error messages in the window, simulation pauses, app stays open; startup problems one plain line, exit code 1; commands pip install -e ".[dev]", python -m kuava_sim, python -m pytest (option a).
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Implementation — US-7 … US-11 PID controller and step-response metrics (Round 2) (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Implementation
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (five passes 2026-11-14, US-7 to US-11). Input: docs/design/DESIGN_0bfd04e.md (US-7 to US-11, approved 14.11.2026), docs/architecture/ARCHITECTURE_3dbd8e9.md (approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #12 (`feature/us7-pid-controller-on`, merge commit `50ef106`), PR #13 (`feature/us8-change-gains-setpoint`, `dc45189`), PR #14 (`feature/us9-closed-loop-thrust`, `e1d36f0`), PR #15 (`feature/us10-step-metrics`, `a77fbcf`) and PR #16 (`feature/us11-python-control-match`, `f351eee`) on `main`
 - **Decisions / Scope Covered**:
   - US-7 controller on/off with `ControllerStatus`; manual thrust rejected while on (`99ff794` red, `8bb54cb` code).
   - US-8 `set_gains` and `set_setpoint` (`23dacb6` red, `514a97a` code).
@@ -25,12 +56,6 @@
   - IQ-11 — US-11 needs no product code: tests committed, falsifiability shown with planted faults (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Solution Architecture — Round 2 PID altitude controller (Approved 14.11.2026)
 
