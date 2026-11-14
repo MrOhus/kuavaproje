@@ -9,16 +9,35 @@ A desktop app runs the simulation live. You tune the controller with sliders and
 - Python 3.12 or newer, with Tkinter (Tcl/Tk). Tkinter is included in the python.org installers for Windows and macOS. On Linux, install your distribution's `python3-tk` package.
 - The app itself needs nothing beyond the standard library. The test tools (pytest, python-control) are installed by the setup command below.
 
-## Setup
+## Setup (do this first)
 
-From the repository folder:
+Run the setup once before starting the app or the tests. Without it, `python -m kuava_sim` fails with `No module named kuava_sim`, because Python cannot find the package yet.
 
-```sh
-python -m venv .venv
-.venv\Scripts\activate          # Windows
-source .venv/bin/activate       # macOS / Linux
-python -m pip install -e ".[dev]"
-```
+1. Open a terminal in the repository folder.
+2. Create a virtual environment called `.venv`. Skip this step if the `.venv` folder already exists.
+
+   ```sh
+   python -m venv .venv
+   ```
+
+3. Activate `.venv`. The command depends on your terminal:
+
+   | Terminal | Command |
+   |---|---|
+   | Windows PowerShell | `.venv\Scripts\Activate.ps1` |
+   | Windows Command Prompt | `.venv\Scripts\activate.bat` |
+   | Git Bash on Windows | `source .venv/Scripts/activate` |
+   | macOS / Linux | `source .venv/bin/activate` |
+
+   When it is active, the prompt starts with `(.venv)`. If PowerShell refuses to run the script, allow it once for your user with `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then try again.
+
+4. Install the package and the test tools into `.venv`:
+
+   ```sh
+   python -m pip install -e ".[dev]"
+   ```
+
+Activate `.venv` again (step 3) in every new terminal before running the commands below. Steps 2 and 4 are needed only once.
 
 ## Start the app
 
