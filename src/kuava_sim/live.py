@@ -57,6 +57,7 @@ class LiveSession:
     def __init__(self, now: float):
         self.values = {name: start for name, (_, _, start) in SLIDERS.items()}
         self._frame_times = deque()  # frame times within the last second
+        self.paused = False
         self._start(now)
 
     def _start(self, now: float) -> None:
@@ -101,7 +102,30 @@ class LiveSession:
 
     def press_gust(self) -> None:
         """The gust button: a 5 N downward push for 0.5 s from the next step."""
-        self._sim.gust()
+        if not self.paused:  # the button is disabled while paused (OQ-37)
+            self._sim.gust()
+
+    def pause(self) -> None:
+        self.paused = True
+
+    def resume(self, now: float) -> None:
+        """Carry on from the paused state; no simulated time passed while paused."""
+        self.paused = False
+        self._anchor(now)
+
+    def toggle_pause(self, now: float) -> None:
+        if self.paused:
+            self.resume(now)
+        else:
+            self.pause()
+
+    def reset(self, now: float) -> None:
+        """Back to time 0 in a new simulation with the current slider values.
+
+        Plots and metrics start again and no gust is acting; the pause state
+        stays as it was (OQ-37).
+        """
+        self._start(now)
 
     def tick(self, now: float) -> int:
         """Take the steps due by the wall clock (pacing predicate); return how many."""
@@ -109,6 +133,8 @@ class LiveSession:
         frames.append(now)
         while frames[0] <= now - 1.0:
             frames.popleft()
+        if self.paused:
+            return 0
         sim = self._sim
         due = int((now - self._anchor_time) * STEP_RATE_HZ) - (
             sim.step_count - self._anchor_step

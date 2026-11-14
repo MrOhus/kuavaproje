@@ -227,7 +227,6 @@ def test_gust_button_starts_a_gust(tk_root):
 # --- Scenario: The gust button does nothing while paused ----------------------
 
 
-@pytest.mark.xfail(strict=True, reason="pause arrives with US-17 (IQ-9 practice)")
 def test_gust_button_is_disabled_and_ignored_while_paused(tk_root):
     from kuava_sim import app
 

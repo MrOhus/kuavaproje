@@ -206,7 +206,6 @@ def test_an_average_just_above_30_fps_passes():
 # --- Scenario: The plots stop changing while paused ---------------------------
 
 
-@pytest.mark.xfail(strict=True, reason="pause arrives with US-17 (IQ-9 practice)")
 def test_plots_stop_changing_while_paused():
     from kuava_sim import live
 

@@ -129,6 +129,10 @@ class App:
         self.gust_button = tk.Button(status, text="Wind gust", width=10,
                                      command=self._on_gust)
         self.gust_button.pack(side=tk.RIGHT, padx=4)
+        self.reset_button = tk.Button(status, text="Reset", width=10, command=self._on_reset)
+        self.reset_button.pack(side=tk.RIGHT, padx=4)
+        self.pause_button = tk.Button(status, text="Pause", width=10, command=self._on_pause)
+        self.pause_button.pack(side=tk.RIGHT, padx=4)
         self.fps_label = tk.Label(status, text="0 fps", width=8, anchor="w")
         self.fps_label.pack(side=tk.LEFT)
 
@@ -136,6 +140,14 @@ class App:
 
     def _on_gust(self) -> None:
         self.session.press_gust()
+
+    def _on_pause(self) -> None:
+        self.session.toggle_pause(self.clock())
+        self._draw_buttons()
+
+    def _on_reset(self) -> None:
+        self.session.reset(self.clock())
+        self._draw_buttons()
 
     def _on_setpoint_release(self, event=None) -> None:
         self.session.release_setpoint(self.sliders["setpoint"].get())
@@ -153,7 +165,13 @@ class App:
         session.tick(now)
         self._draw_plots()
         self._draw_table()
+        self._draw_buttons()
         self.fps_label.configure(text=f"{session.fps(now)} fps")
+
+    def _draw_buttons(self) -> None:
+        paused = self.session.paused
+        self.pause_button.configure(text="Resume" if paused else "Pause")
+        self.gust_button.configure(state=tk.DISABLED if paused else tk.NORMAL)
 
     def _draw_table(self) -> None:
         rows = [format_row(m) for m in self.session.metrics_rows()]
