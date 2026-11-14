@@ -4,13 +4,46 @@
 
 ## Active Entry
 
-### Requirement Analysis — Round 3 live GUI, wind gust, pause and reset
+### Solution Architecture — Round 3 live GUI, wind gust, pause and reset
+
+- **Status**: Approved
+- **Stage**: Solution Architecture
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/architecture/ARCHITECTURE_899eaea.md (linked from docs/architecture/ARCHITECTURE.md). Input: docs/design/DESIGN_f351eee.md (History entry "Requirement Analysis — Round 3 live GUI, wind gust, pause and reset", Approved 14.11.2026)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - Models: gust constant and state in `Simulation` with the step-with-gust predicate; `last_step_metrics()`; `LiveSession` (no Tk, fake clock) with the real-time pacing predicate; the Tk `App`; startup in `__main__.py`; GUI tests. Each with types and units, invariants, boundary behavior and concurrency analysis.
+  - Decisions D-16 … D-23, decided by the operator through AQ-15 … AQ-22 (answers in the operator's own words).
+  - All six items deferred by requirement analysis are covered: D-16 technology, D-17 thread and catch-up limit (50 steps), D-18 core/session/window split, D-19 and D-20 gust API and records, D-22 GUI and frame-rate tests.
+  - Coding details decided by the architect under standing rule 3 and recorded: frame interval 16 ms, scheduled adaptively; one plotted point per 4 steps; refresh after max(0.5 s, 20 × last recompute time); `last_step_metrics()`.
+  - Small UI details approved by the operator: a key release on the setpoint slider counts as letting go; display rounding; axis scaling.
+  - Prototype (scratch): Tk canvas 65 fps; matplotlib full redraw 19 fps; `step_metrics()` 30 ms at 120k records, 201 ms at 720k.
+- **Open Questions Resolved This Session**:
+  - AQ-15 — "Tkinter. It comes with Python and it was the only one fast enough (65 fps)." → D-16.
+  - AQ-16 — "Keep everything in one thread. If the PC lags, catch up a quarter second at most and skip the rest." → D-17.
+  - AQ-17 — "Keep pause, reset and sliders separate from the window so they can be tested without one. Reset starts a new simulation." → D-18.
+  - AQ-18 — "Just one simple gust button function, nothing extra." → D-19.
+  - AQ-19 — "Keep the 6 numbers. The gust already shows in the acceleration." → D-20.
+  - AQ-20 — "Only update the newest row, every half second or slower so the app stays fast." → D-21.
+  - AQ-21 — "If there's no screen, skip the window tests and say why." → D-22.
+  - AQ-22 — "Show a short red message in the window and pause. No popups. Don't print the full error anywhere." (The first answer, which kept the full error in the terminal, conflicted with OQ-41 and was replaced.) → D-23.
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Requirement Analysis — Round 3 live GUI, wind gust, pause and reset (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Requirement Analysis
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/design/DESIGN_f351eee.md (linked from docs/design/DESIGN.md)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #17 (`docs/round3-gui-requirements`), merge commit `899eaea` on `main`
 - **Decisions / Scope Covered**:
   - Round 3 scope: simple desktop GUI running the simulation live with the PID controller; sliders for Kp, Ki, Kd and the setpoint; live plots of setpoint, altitude and controller output above 30 fps; metrics after each setpoint change; wind gust button; pause and reset; README with setup and metric definitions; one start command and one test command; clear error messages instead of crashes.
   - Out of scope: all bonus items, and everything out of scope in Rounds 1 and 2 unless named above.
@@ -27,12 +60,6 @@
   - OQ-41 — Plain error messages in the window, simulation pauses, app stays open; startup problems one plain line, exit code 1; commands pip install -e ".[dev]", python -m kuava_sim, python -m pytest (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Implementation — US-7 … US-11 PID controller and step-response metrics (Round 2) (Approved 14.11.2026)
 
