@@ -4,13 +4,35 @@
 
 ## Active Entry
 
-### Solution Architecture — Round 1 altitude simulation
+### Implementation — US-1 Configure the simulation
+
+- **Status**: Approved
+- **Stage**: Implementation
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (pass 2026-11-14, US-1). Input: docs/design/DESIGN.md (US-1, approved 13.11.2026), docs/architecture/ARCHITECTURE.md (approved 14.11.2026)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - US-1 implemented: constants, validated immutable `SimConfig`, `Simulation` construction with read-only step rate, step length, minimum thrust and held thrust.
+  - 86 acceptance tests pass, 1 strict xfail (IQ-1). 18 of 18 planted bugs caught.
+  - Project scaffolding: `pyproject.toml` (requires-python >= 3.12, dev extra: pytest, control).
+- **Open Questions Resolved This Session**:
+  - IQ-1 — The 200-step part of "Maximum thrust of 0 N is accepted" stays in US-1 as a strict xfail until US-2/3/5/6 land (option a).
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Solution Architecture — Round 1 altitude simulation (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Solution Architecture
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/architecture/ARCHITECTURE.md. Input: docs/design/DESIGN.md (History entry "Requirement Analysis — Round 1 altitude simulation", Approved 13.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #3 (`docs/round1-altitude-sim-architecture`), merge commit `ecb127c` on `main`
 - **Decisions / Scope Covered**:
   - Entities: constants (`STEP_RATE_HZ`, `DT`, `MIN_THRUST`, `DEFAULT_GRAVITY`), `SimConfig` (frozen, validated), `Record`, `RecordLog` (flat `array('d')`), `Simulation` (`step(thrust=None)`, `run(n, thrust=None)`), each with types and units, invariants, boundary behavior and concurrency analysis.
   - D-1 CPython `>= 3.12`, developed on 3.15.2; standard library only at runtime.
@@ -31,12 +53,6 @@
   - AQ-6 — `step(thrust)` / `run(n, thrust)` with built-in error types naming the setting (option a) → D-6.
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Requirement Analysis — Round 1 altitude simulation (Approved 13.11.2026)
 
