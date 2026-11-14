@@ -10,7 +10,7 @@ import tkinter as tk
 
 import pytest
 
-from gui_helpers import FakeClock
+from gui_helpers import FakeClock, require_visible
 
 M, G = 1.0, 9.81
 DT = 0.005
@@ -86,6 +86,8 @@ def test_slider_range_step_and_start_value(tk_root, name, low, high, start):
 def test_slider_cannot_go_outside_its_range(tk_root, name, low, high, start):
     a = make_app(tk_root)
     scale = a.sliders[name]
+    if name == "setpoint":  # needs the release event
+        require_visible(tk_root, scale)
     for target, expected in ((low - 5.0, low), (high + 5.0, high)):
         drag(tk_root, scale, target)
         if name == "setpoint":
@@ -143,6 +145,7 @@ def test_setpoint_changes_only_when_the_slider_is_released(tk_root, how):
     a = make_app(tk_root, clock)
     walk(a, clock, 1.0)
     scale = a.sliders["setpoint"]
+    require_visible(tk_root, scale)
     for value in (14.0, 19.5, 25.0):  # dragging through several values
         drag(tk_root, scale, value)
         assert a.session.sim.controller.setpoint == 10.0
@@ -179,6 +182,7 @@ def test_releasing_at_the_current_setpoint_changes_nothing(tk_root):
     a = make_app(tk_root, clock)
     walk(a, clock, 0.5)
     scale = a.sliders["setpoint"]
+    require_visible(tk_root, scale)  # otherwise the release never arrives and nothing is checked
     drag(tk_root, scale, 30.0)
     drag(tk_root, scale, 10.0)
     let_go(tk_root, scale)

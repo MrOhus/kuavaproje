@@ -9,7 +9,7 @@ Pause/Resume and Reset buttons).
 
 import pytest
 
-from gui_helpers import FakeClock, record_bytes
+from gui_helpers import FakeClock, record_bytes, require_visible
 
 M, G = 1.0, 9.81
 DT = 0.005
@@ -100,6 +100,7 @@ def test_window_pause_button_and_sliders_while_paused(tk_root):
     assert a.session.paused is True
     assert a.pause_button.cget("text") == "Resume"
     scale = a.sliders["setpoint"]
+    require_visible(tk_root, scale)
     scale.set(30.0)
     tk_root.update()
     scale.event_generate("<ButtonRelease-1>", x=1, y=1)
