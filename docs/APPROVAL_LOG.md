@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Implementation — US-12 … US-19 live GUI, wind gust, pause and reset (Round 3)
+_No active entry. The next pipeline stage (implementation, gain-slider fix) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Implementation — US-12 … US-19 live GUI, wind gust, pause and reset (Round 3) (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Implementation
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (eight passes 2026-11-14, US-12 to US-19). Input: docs/design/DESIGN_f351eee.md (approved 14.11.2026), docs/architecture/ARCHITECTURE_899eaea.md (approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PRs #19 … #26 (`feature/us12-live-app` … `feature/us19-readme-commands`), merge commits `32e510f`, `faf6f7e`, `b099fa9`, `2a5ae4f`, `7499561`, `950263b`, `e9ebce2`, `3532cfb` on `main`
 - **Decisions / Scope Covered**:
   - US-12 live app, real-time pacing, start command and startup messages (`844f48f` red, `a01cdbf` code).
   - US-13 sliders (`6d24095` red, `ef98da2` operator-approved test-setup fix, `7d08521` code).
@@ -26,12 +35,6 @@
 - **Open Questions Resolved This Session**: none raised (no question changed what the app does or looks like)
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Solution Architecture — Round 3 live GUI, wind gust, pause and reset (Approved 14.11.2026)
 
