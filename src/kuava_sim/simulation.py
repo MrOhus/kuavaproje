@@ -80,6 +80,25 @@ class Simulation:
     def __init__(self, config: SimConfig):
         self._config = config
         self._held_thrust = 0.0  # N, last accepted thrust command
+        self._step_count = 0
+
+    def step(self, thrust=None) -> None:
+        """Advance one fixed step. A given thrust becomes the held command."""
+        if thrust is not None:
+            self._held_thrust = thrust
+        self._step_count += 1
+
+    def run(self, n: int, thrust=None) -> None:
+        """Do exactly what n calls to step() would do; run(0) changes nothing."""
+        if isinstance(n, bool) or not isinstance(n, int):
+            raise TypeError(f"n must be a whole number of steps (got {n!r})")
+        if n < 0:
+            raise ValueError(f"n must not be negative (got {n})")
+        if n == 0:
+            return
+        self.step(thrust)
+        for _ in range(n - 1):
+            self.step()
 
     @property
     def config(self) -> SimConfig:
@@ -88,6 +107,25 @@ class Simulation:
     @property
     def held_thrust(self) -> float:
         return self._held_thrust
+
+    @property
+    def step_count(self) -> int:
+        return self._step_count
+
+    @property
+    def time(self) -> float:
+        """Simulated time in s, from the step count so it cannot drift."""
+        return self._step_count / STEP_RATE_HZ
+
+    @property
+    def altitude(self) -> float:
+        """Altitude in m. Dynamics arrive with US-3 (IQ-2)."""
+        return self._config.initial_altitude
+
+    @property
+    def velocity(self) -> float:
+        """Vertical velocity in m/s, positive upward. Dynamics arrive with US-3 (IQ-2)."""
+        return self._config.initial_velocity
 
     @property
     def step_rate_hz(self) -> int:
