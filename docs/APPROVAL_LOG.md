@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Implementation — US-7 … US-11 PID controller and step-response metrics (Round 2)
+_No active entry. The next pipeline stage (requirement analysis, Round 3) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Implementation — US-7 … US-11 PID controller and step-response metrics (Round 2) (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Implementation
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (five passes 2026-11-14, US-7 to US-11). Input: docs/design/DESIGN_0bfd04e.md (US-7 to US-11, approved 14.11.2026), docs/architecture/ARCHITECTURE_3dbd8e9.md (approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #12 (`feature/us7-pid-controller-on`, merge commit `50ef106`), PR #13 (`feature/us8-change-gains-setpoint`, `dc45189`), PR #14 (`feature/us9-closed-loop-thrust`, `e1d36f0`), PR #15 (`feature/us10-step-metrics`, `a77fbcf`) and PR #16 (`feature/us11-python-control-match`, `f351eee`) on `main`
 - **Decisions / Scope Covered**:
   - US-7 controller on/off with `ControllerStatus`; manual thrust rejected while on (`99ff794` red, `8bb54cb` code).
   - US-8 `set_gains` and `set_setpoint` (`23dacb6` red, `514a97a` code).
@@ -25,12 +34,6 @@
   - IQ-11 — US-11 needs no product code: tests committed, falsifiability shown with planted faults (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Solution Architecture — Round 2 PID altitude controller (Approved 14.11.2026)
 
