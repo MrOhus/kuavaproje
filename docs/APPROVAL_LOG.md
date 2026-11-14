@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Solution Architecture — Round 3 live GUI, wind gust, pause and reset
+_No active entry. The next pipeline stage (implementation, Round 3) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Solution Architecture — Round 3 live GUI, wind gust, pause and reset (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Solution Architecture
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/architecture/ARCHITECTURE_899eaea.md (linked from docs/architecture/ARCHITECTURE.md). Input: docs/design/DESIGN_f351eee.md (History entry "Requirement Analysis — Round 3 live GUI, wind gust, pause and reset", Approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #18 (`docs/round3-gui-architecture`), merge commit `6069d65` on `main`
 - **Decisions / Scope Covered**:
   - Models: gust constant and state in `Simulation` with the step-with-gust predicate; `last_step_metrics()`; `LiveSession` (no Tk, fake clock) with the real-time pacing predicate; the Tk `App`; startup in `__main__.py`; GUI tests. Each with types and units, invariants, boundary behavior and concurrency analysis.
   - Decisions D-16 … D-23, decided by the operator through AQ-15 … AQ-22 (answers in the operator's own words).
@@ -29,12 +38,6 @@
   - AQ-22 — "Show a short red message in the window and pause. No popups. Don't print the full error anywhere." (The first answer, which kept the full error in the terminal, conflicted with OQ-41 and was replaced.) → D-23.
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Requirement Analysis — Round 3 live GUI, wind gust, pause and reset (Approved 14.11.2026)
 
