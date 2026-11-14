@@ -4,6 +4,77 @@ Append one entry per implementation pass (one story per pass), **most recent fir
 
 ---
 
+## Pass: 2026-11-14 — Fix: gain sliders while the window is not drawn (US-13)
+
+**Branch:** `bugfix/gain-slider-redraw` (from `main` at `3532cfb`)
+**Traces to:** `docs/design/DESIGN_f351eee.md` (US-13 "A gain takes effect while its slider is dragged", OQ-36), `docs/architecture/ARCHITECTURE_899eaea.md` (App sliders; D-22 skip rule from AQ-21)
+**Approval basis:** Requirement Analysis and Solution Architecture (Round 3) approved 14.11.2026. Fix and test change requested by the operator after the pre-submission check: "fix it the normal way, own branch, failing test first"; "Skip them with the reason shown, the same as AQ-21 when there's no screen."
+
+**Found by:** the pre-submission check. A slider change made by code while the window was not drawn (withdrawn, minimized or a locked screen) was not applied. In a scratch copy with the test window hidden, 9 of the 106 Round 3 tests failed:
+- 4 because of this bug;
+- 5 because Tk does not deliver mouse and key events to a hidden window.
+
+**Cause:** Tk runs a Scale's `command` only when it redraws the slider on screen. For a user dragging with the mouse, the window is visible, so the effect was mainly on tests run without a visible window.
+
+**Files:**
+- `src/kuava_sim/app.py`: the gain sliders now use a `tk.DoubleVar` with a write trace that calls `set_gain`.
+- `tests/acceptance/test_us13_hidden_window.py` (new).
+- `tests/acceptance/gui_helpers.py`: `require_visible`.
+- The event-driven tests in `test_us13_sliders.py`, `test_us17_pause_reset.py` and `test_us18_error_messages.py` now call it.
+
+**Red proof:** the new tests were committed in `362a81d` before any code. 6 failed: 4 showed the bug (the old gain stayed in use), and 2 failed because `require_visible` did not exist yet. 1 passed: the setpoint slider still waits for release. The approved skip change followed in `cc72708`. `git diff cc72708 9cb5cdb -- tests/` is empty.
+
+**Result:**
+- Visible window: 479 passed.
+- Test window hidden (scratch copy only): 472 passed, 7 skipped with the reason shown, 0 failed.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| A gain takes effect while its slider is dragged, also when the window is not drawn | ✅ Pass | `test_gain_slider_applies_while_the_window_is_not_drawn` (kp, ki, kd), `test_every_gain_change_while_hidden_is_applied_in_order` |
+| The setpoint changes only when the slider is released (unchanged while hidden) | ✅ Pass | `test_setpoint_slider_still_waits_for_release_while_hidden` |
+| Window tests needing mouse or key events skip with the reason when the window is not visible | ✅ Pass | `test_event_tests_skip_with_the_reason_when_the_window_is_not_visible`, `test_event_tests_run_when_the_window_is_visible` |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| App sliders | The shown gain value is the value in use, from the next step, whether or not the window is drawn | Hidden-window tests; all US-13 tests on a visible window |
+| D-17 | Still one thread: the variable trace runs in the Tk thread | No threads added |
+| D-22 / AQ-21 | A test that cannot run on this machine skips and prints the reason | Hidden scratch run: 7 skips, each with its reason |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- **Test change after sign-off (operator-approved).** Six existing window tests now call `require_visible()`:
+  - US-13: setpoint range, setpoint release (mouse and key), release at the current setpoint;
+  - US-17: sliders while paused;
+  - US-18: rejected request.
+
+  Their assertions are unchanged, and on a visible window they run as before. The operator approved this for the 5 tests named in the check. The sixth, the release at the current setpoint, was added because, while hidden, it passed without checking anything: the release it expects to "change nothing" never arrived.
+
+### Coding Details Decided (rule 3)
+
+- The Tk variables are kept in `App._gain_vars` so they are not garbage-collected.
+- The skip reason is "window not visible on screen: Tk does not deliver mouse and key events to it".
+
+### Version Control Actions
+
+- Branch: `bugfix/gain-slider-redraw` (from `main` at `3532cfb`)
+- Commits:
+  - `2ae838b` docs(approval): History move of the Round 3 implementation entry, with all index rows marked Merged;
+  - `362a81d` test (red);
+  - `cc72708` test (operator-approved skip change);
+  - `9cb5cdb` fix(app).
+- docs(implementation): this entry and the signed approval entry, after the operator signs
+- PR: opened against `main` and merged with a merge commit, after the operator signs
+
+---
+
 ## Pass: 2026-11-14 — US-19 README and one-command start and test
 
 **Branch:** `feature/us19-readme-commands` (stacked on `feature/us18-error-messages`; IQ-10 practice)

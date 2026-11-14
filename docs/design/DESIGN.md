@@ -6,9 +6,9 @@ Central index of requirement analysis output for this repository. Individual ses
 
 | File | Scope / Topic | Started (commit) | Status |
 |---|---|---|---|
-| (this file) | Core: Round 1 — deterministic fixed-step altitude simulation | 74c72ce | Active |
+| (this file) | Core: Round 1 — deterministic fixed-step altitude simulation | 74c72ce | Merged |
 | [DESIGN_0bfd04e.md](DESIGN_0bfd04e.md) | Round 2 — PID altitude controller and step-response metrics (US-7 … US-11, OQ-26 … OQ-33) | 0bfd04e | Merged |
-| [DESIGN_f351eee.md](DESIGN_f351eee.md) | Round 3 — live desktop GUI, wind gust, pause and reset, README (US-12 … US-19, OQ-34 … OQ-41) | f351eee | Active |
+| [DESIGN_f351eee.md](DESIGN_f351eee.md) | Round 3 — live desktop GUI, wind gust, pause and reset, README (US-12 … US-19, OQ-34 … OQ-41) | f351eee | Merged |
 
 ## Scope — Round 1
 

@@ -11,7 +11,7 @@ clears it.
 
 import pytest
 
-from gui_helpers import FakeClock
+from gui_helpers import FakeClock, require_visible
 
 
 def make_app(root, clock):
@@ -116,6 +116,7 @@ def test_a_rejected_request_shows_the_simulation_message(tk_root, capfd):
     a = make_app(tk_root, clock)
     a.session.sim.disable_controller()  # now a setpoint change is rejected
     scale = a.sliders["setpoint"]
+    require_visible(tk_root, scale)
     scale.set(20.0)
     tk_root.update()
     scale.event_generate("<ButtonRelease-1>", x=1, y=1)
