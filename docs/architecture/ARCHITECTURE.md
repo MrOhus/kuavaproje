@@ -7,6 +7,7 @@ Central index of solution-architect output for this repository. Only requirement
 | File | Scope / Topic | Started (commit) | Status |
 |---|---|---|---|
 | (this file) | Core: Round 1 — deterministic fixed-step altitude simulation (Python) | c8c3271 | Active |
+| [ARCHITECTURE_3dbd8e9.md](ARCHITECTURE_3dbd8e9.md) | Round 2 — PID altitude controller and step-response metrics (D-8 … D-15, AQ-7 … AQ-14) | 3dbd8e9 | Active |
 
 **Input:** [docs/design/DESIGN.md](../design/DESIGN.md), Round 1 (US-1 … US-6), approved by Ohus on 13.11.2026 (APPROVAL_LOG History: "Requirement Analysis — Round 1 altitude simulation").
 

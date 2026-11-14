@@ -17,3 +17,4 @@
 | OQ-27: Hover feed-forward? | Give the drone its hover thrust for free, PID only corrects | Yes. Otherwise the PID has to learn the weight and the drone sags at first. |
 | OQ-28: Derivative on error or on altitude? | What the D part looks at | Altitude. On error, a setpoint change causes a one-step thrust spike (derivative kick). |
 | OQ-30: Metric definitions | How rise time, overshoot, settling time and steady-state error are measured | python-control's: rise 10% to 90%, settle within 2% for good, overshoot past the final value, error = setpoint minus final altitude. |
+| AQ-12: Which python-control model is the reference? | An independent ideal model of the drone to compare against | The smooth continuous model. Worst difference was 0.6%, inside the 2% rule. |
