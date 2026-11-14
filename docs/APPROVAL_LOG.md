@@ -4,7 +4,33 @@
 
 ## Active Entry
 
-_No active entry. The next pipeline stage (solution-architect) opens a new `Pending Approval` entry here._
+### Solution Architecture — Round 1 altitude simulation
+
+- **Status**: Approved
+- **Stage**: Solution Architecture
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/architecture/ARCHITECTURE.md. Input: docs/design/DESIGN.md (History entry "Requirement Analysis — Round 1 altitude simulation", Approved 13.11.2026)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - Entities: constants (`STEP_RATE_HZ`, `DT`, `MIN_THRUST`, `DEFAULT_GRAVITY`), `SimConfig` (frozen, validated), `Record`, `RecordLog` (flat `array('d')`), `Simulation` (`step(thrust=None)`, `run(n, thrust=None)`), each with types and units, invariants, boundary behavior and concurrency analysis.
+  - D-1 CPython `>= 3.12`, developed on 3.15.2; standard library only at runtime.
+  - D-2 Python `float` scalar loop (no NumPy at runtime) for bit-exact determinism.
+  - D-3 (deferred item) Exact formulation: `D = -(b*v)`, `a = ((T - m*g) + D) / m`, `vn = v + a*DT`, `hn = h + vn*DT`, `time = n / 200`. Hover is bit-exact when thrust is passed as `m*g`.
+  - D-4 (deferred item) Floor condition: `hn <= 0 and vn < 0`. Every record satisfies "altitude 0 ⇒ velocity ≥ 0".
+  - D-5 Records stored as 6 doubles per record in one array; read-only `Sequence[Record]` view plus `column()`.
+  - D-6 Built-in `ValueError`/`TypeError` with messages naming the parameter; command and step happen in one call.
+  - D-7 pytest + python-control 0.10.x as a dev-only extra; exact discrete-time state-space cross-check plus continuous plant `1/(s(ms+b))` for metrics.
+  - Noted for a later stage: overflow with extreme configurations, thread-safety for the GUI, external real-time pacing.
+  - D-1, D-2, D-4, D-5, D-6, D-7 were decided by the operator through AQ-1 … AQ-6 (all recommended options). D-3 is the architect's decision on the deferred formulation item.
+- **Open Questions Resolved This Session**:
+  - AQ-1 — Ground stops the drone when the new height is ≤ 0 and it is moving down (option b) → D-4.
+  - AQ-2 — Python 3.12 or newer, developed on 3.15.2 (option a) → D-1.
+  - AQ-3 — pytest; python-control installed only for testing (option a) → D-7.
+  - AQ-4 — Normal Python float numbers, no NumPy at runtime (option a) → D-2.
+  - AQ-5 — Records in one compact array, 6 numbers per record (option a) → D-5.
+  - AQ-6 — `step(thrust)` / `run(n, thrust)` with built-in error types naming the setting (option a) → D-6.
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
 
 ---
 
