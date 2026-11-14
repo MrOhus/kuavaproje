@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Solution Architecture — Round 2 PID altitude controller
+_No active entry. The next pipeline stage (implementation, Round 2) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Solution Architecture — Round 2 PID altitude controller (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Solution Architecture
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/architecture/ARCHITECTURE_3dbd8e9.md (linked from docs/architecture/ARCHITECTURE.md). Input: docs/design/DESIGN_0bfd04e.md (History entry "Requirement Analysis — Round 2 PID altitude controller", Approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #11 (`docs/round2-pid-controller-architecture`), merge commit `9e9653b` on `main`
 - **Decisions / Scope Covered**:
   - Models: metric constants, controller state inside `Simulation`, `StepMetrics`, and the controlled-step predicate (integral first, `cmd = ((m*g + Kp*e) + I) - Kd*v`, bit-exact hover at the setpoint), each with types and units, invariants, boundary behavior and concurrency analysis.
   - Decisions D-8 … D-15 (API placement, metrics implementation, step order, degenerate windows, 2 % rule for 0/NaN, reference model, lifecycle, record layout), decided by the operator through AQ-7 … AQ-14.
@@ -27,12 +36,6 @@
   - AQ-14 — Records keep six fields; setpoint changes in a separate list (option a) → D-15.
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Requirement Analysis — Round 2 PID altitude controller (Approved 14.11.2026)
 
