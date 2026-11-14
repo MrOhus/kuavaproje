@@ -4,7 +4,28 @@
 
 ## Active Entry
 
-_No active entry. The next pipeline stage (implementation, Round 3) opens a new `Pending Approval` entry here._
+### Implementation — US-12 … US-19 live GUI, wind gust, pause and reset (Round 3)
+
+- **Status**: Approved
+- **Stage**: Implementation
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (eight passes 2026-11-14, US-12 to US-19). Input: docs/design/DESIGN_f351eee.md (approved 14.11.2026), docs/architecture/ARCHITECTURE_899eaea.md (approved 14.11.2026)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - US-12 live app, real-time pacing, start command and startup messages (`844f48f` red, `a01cdbf` code).
+  - US-13 sliders (`6d24095` red, `ef98da2` operator-approved test-setup fix, `7d08521` code).
+  - US-14 live plots and the frame-rate check (`9ae2413` red, `9414b2b` code); measured 53.8 fps on average.
+  - US-15 metrics table with `last_step_metrics()` (`414e5a0` red, `20ab8d1` code).
+  - US-16 wind gust in the core (`1af3b69` red, `7fe36cf` code).
+  - US-17 pause, resume and reset (`49b5a67` red, `15a3e33` code).
+  - US-18 plain red error messages, no traceback anywhere (`c07a581` red, `a86e63d` code).
+  - US-19 README, `python -m kuava_sim`, `python -m pytest` with skip reasons (`0815273` red, `70cd2f4` docs).
+  - Red tests committed before code for every story; `git diff` of the tests between each red commit and its code commit is empty. The only test change after a red commit is the approved US-13 setup fix.
+  - Small coding details decided under standing rule 3 are listed in each pass.
+  - Full suite: 472 passed, 0 xfailed. Branches stacked `feature/us12-live-app` to `feature/us19-readme-commands`.
+- **Open Questions Resolved This Session**: none raised (no question changed what the app does or looks like)
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
 
 ---
 

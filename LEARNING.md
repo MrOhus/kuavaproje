@@ -1,19 +1,17 @@
 # LEARNING
 
-| Open Question | What it means | My answer |
+| Open Question | What it means, in my own words | My final answer |
 |---|---|---|
-| OQ-4: Which drag model? | How should the drag be calculated | Linear. The drone is slow so simple is enough. |
-| OQ-7: What if thrust is too high? | What happens if you ask for a thrust that the motors are incapable of | Output it as maximum. No warnings, they would stack. |
-| OQ-2: Real time or simulated time? | Should real time or a simulated time be used as baseline | Simulated one. Because the test results are always the same. |
-| OQ-9: How accurate must tests be? | How close counts as correct | 0.6% checked after 1 second. |
-| OQ-12: Speed first or height first? | The order of calculation | Speed first, then height. Keeps bounces realistic by not adding energy. |
-| OQ-11: What happens at the ground? | The things happening while touching ground | Its height can't be negative and speed is 0 while simulation still runs |
-| AQ-1: When does the ground stop the drone? | What counts as hitting the ground | When it's at 0 or below and still moving down. Otherwise it could land exactly on 0 and the old rule would miss it. |
-| AQ-4: Normal numbers or NumPy? | Which kind of math to use for each step | Normal Python numbers. Each step needs the last step's answer, so NumPy can't speed it up. |
-| AQ-3: Where does python-control go? | Is it needed to fly, or only to check answers | Only for testing. The drone doesn't need it to run. |
-| IQ-1: A test needs features from later stories | What to do with a test that can't pass yet | Mark it "expected to fail". It warns me when it starts passing, so I don't forget it. |
-| IQ-4: What if a story's tests pass before any code is written? | No red phase is possible because earlier code already does the job | Break the code on purpose and show the tests catch it. Proves the tests can fail. |
-| OQ-27: Hover feed-forward? | Give the drone its hover thrust for free, PID only corrects | Yes. Otherwise the PID has to learn the weight and the drone sags at first. |
-| OQ-28: Derivative on error or on altitude? | What the D part looks at | Altitude. On error, a setpoint change causes a one-step thrust spike (derivative kick). |
-| OQ-30: Metric definitions | How rise time, overshoot, settling time and steady-state error are measured | python-control's: rise 10% to 90%, settle within 2% for good, overshoot past the final value, error = setpoint minus final altitude. |
-| AQ-12: Which python-control model is the reference? | An independent ideal model of the drone to compare against | The smooth continuous model. Worst difference was 0.6%, inside the 2% rule. |
+| OQ-12: Is a specific integration method required (explicit Euler, semi-implicit/symplectic Euler, RK4, exact analytic), or is it the architect's choice subject to the tolerances in OQ-9? | How the sim calculates each tiny step | Speed first, then height. It's simple and stays accurate. |
+| OQ-13: What scope does "fully deterministic" cover: same process, same machine/build, or bit-identical across OSes, CPUs and compilers? | How exactly two runs must match | Same computer and same code give the exact same numbers. |
+| OQ-24: With linear drag and semi-implicit Euler at dt = 0.005 s, velocity oscillates if b·dt/m ≥ 1 (b ≥ 200·m) and becomes unstable if b·dt/m ≥ 2. Should such configurations be rejected, accepted with that behaviour, or otherwise handled? | Too much drag makes the speed unstable, what to do? | Show an error if drag is 200 × mass or more. |
+| OQ-26: What does "match python-control's step_info within 2 %" compare? | What results are checked against | The math against python-control on the same flight, and the drone against python-control's ideal drone. |
+| OQ-27: Does the thrust include a hover feed-forward? | Should the drone be given enough thrust to float for free | Yes. Otherwise the drone sinks first while the PID figures it out. |
+| OQ-28: The exact PID formula. | Which PID to use | The drone's height, not the error. Using the error gives a big thrust spike when the target changes. |
+| OQ-30: Exact metric definitions. | How to measure how well the drone reaches its target | The same way python-control does: how fast it gets there, how far it overshoots, when it settles, and how far off it ends. |
+| AQ-4: What kind of numbers does the step use? | Normal Python numbers or NumPy | Normal numbers. Each step needs the last one, so NumPy can't speed it up. |
+| AQ-5: How are the saved records stored? | How the saved data is kept | One tight block of numbers. It uses less memory. |
+| AQ-9: Order inside a controlled step. | Which part of the PID is calculated first | Add the new error first, then calculate thrust, so it isn't one step late. |
+| AQ-11: "Within 2 %" when the reference is 0 or NaN. | What happens when the reference is NaN or zero | If it's zero, being within 0.02 is fine. If both say "no answer", that counts as a match. |
+| AQ-12: Which python-control model for OQ-26? | Which ideal drone we compare against | The smooth one. It only matches when the drone moves slowly, so the tests use slow settings. |
+| IQ-5: How should the separate-process test run and compare? | How to prove a fresh run gives the same results | Run it twice with Python's hidden randomness set differently. If the results are identical, nothing depends on luck. |
