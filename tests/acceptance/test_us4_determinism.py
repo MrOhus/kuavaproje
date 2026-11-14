@@ -5,7 +5,7 @@ ARCHITECTURE.md D-2/D-3 (plain floats, fixed operation order) and D-7 (run
 the same script twice with subprocess and compare the bytes). "Bit-for-bit"
 is checked on the raw IEEE-754 bytes of every record field.
 
-The choices marked IQ-4 … IQ-7 are proposals waiting for the operator
+The choices marked IQ-4 … IQ-7 were confirmed by the operator as option a
 (see the US-4 pass in docs/implementation/IMPLEMENTATION_LOG.md).
 """
 
