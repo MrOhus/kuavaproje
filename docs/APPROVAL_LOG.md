@@ -4,8 +4,21 @@
 
 ## Active Entry
 
-_No active entry. The next pipeline stage (implementation) opens a new `Pending Approval` entry here._
+### Implementation — US-1 Configure the simulation
 
+- **Status**: Approved
+- **Stage**: Implementation
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (pass 2026-11-14, US-1). Input: docs/design/DESIGN.md (US-1, approved 13.11.2026), docs/architecture/ARCHITECTURE.md (approved 14.11.2026)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - US-1 implemented: constants, validated immutable `SimConfig`, `Simulation` construction with read-only step rate, step length, minimum thrust and held thrust.
+  - 86 acceptance tests pass, 1 strict xfail (IQ-1). 18 of 18 planted bugs caught.
+  - Project scaffolding: `pyproject.toml` (requires-python >= 3.12, dev extra: pytest, control).
+- **Open Questions Resolved This Session**:
+  - IQ-1 — The 200-step part of "Maximum thrust of 0 N is accepted" stays in US-1 as a strict xfail until US-2/3/5/6 land (option a).
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
 ---
 
 ## History
