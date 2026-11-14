@@ -179,7 +179,6 @@ def test_a_fresh_change_shows_not_reached_never_nan_zero_or_blank():
 # --- Scenario: Reset clears the metrics table ---------------------------------
 
 
-@pytest.mark.xfail(strict=True, reason="reset arrives with US-17 (IQ-9 practice)")
 def test_reset_leaves_only_the_new_start_row():
     s = three_changes()
     s.reset(10.0)
