@@ -41,7 +41,9 @@ def drag(root, scale, value):
 def let_go(root, scale, how="mouse"):
     if how == "mouse":
         scale.event_generate("<ButtonRelease-1>", x=1, y=1)
-    else:
+    else:  # key events go to the widget with keyboard focus
+        scale.focus_force()
+        root.update()
         scale.event_generate("<KeyRelease>", keysym="Right")
     root.update()
 
@@ -112,7 +114,7 @@ def test_gain_takes_effect_while_dragging_and_adds_no_metrics_row(tk_root):
     expected = next_thrust(sim, 6.0, 1.0, 3.0, 10.0)
     old_gain = next_thrust(sim, 4.0, 1.0, 3.0, 10.0)
     assert expected != old_gain
-    clock.now += 0.005
+    clock.now += 1 / 128  # exactly one more step is due (0.005 would round down to 0)
     a.frame()  # exactly one new step
     assert sim.records[-1].thrust_used == pytest.approx(expected, rel=1e-12, abs=1e-12)
     assert len(sim.step_metrics()) == 1
@@ -152,7 +154,7 @@ def test_setpoint_changes_only_when_the_slider_is_released(tk_root, how):
     assert len(results) == 2  # exactly one new metrics row
     assert results[1].change_index == sim.step_count and results[1].setpoint == 25.0
     expected = next_thrust(sim, 4.0, 1.0, 3.0, 25.0)
-    clock.now += 0.005
+    clock.now += 1 / 128  # exactly one more step is due (0.005 would round down to 0)
     a.frame()
     assert sim.records[-1].thrust_used == pytest.approx(expected, rel=1e-12, abs=1e-12)
     a.close()
