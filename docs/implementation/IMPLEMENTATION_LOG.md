@@ -4,6 +4,76 @@ Append one entry per implementation pass (one story per pass), **most recent fir
 
 ---
 
+## Pass: 2026-11-14 — US-3 Compute vertical dynamics from gravity, thrust and drag
+
+**Branch:** `feature/us3-vertical-dynamics`
+**Traces to:** `docs/design/DESIGN.md` (US-3, I-1, I-4), `docs/architecture/ARCHITECTURE.md` (Entity: Simulation — step, thrust checks, all-or-nothing; decisions D-2 floats, D-3 formulation, D-4 floor condition, D-6 errors)
+**Approval basis:** Requirement Analysis entry approved 13.11.2026; Solution Architecture entry approved 14.11.2026 (see `docs/APPROVAL_LOG.md`)
+
+**Files:** `src/kuava_sim/simulation.py`, `tests/acceptance/test_us3_dynamics.py`.
+**Red proof:** the tests were committed in `1f5fad7` before any production code (37 failed, 0 passed, 7 strict xfail for record fields). `git diff 1f5fad7 -- tests/` is empty after green.
+**Result:** 142 passed, 12 xfailed (strict: 1 from IQ-1, 4 from IQ-2, 7 US-3 record-field tests waiting for US-6). Python 3.15.2, pytest 9.2.0. As the operator asked, no planted-bug check was run.
+
+### Acceptance Criteria Coverage
+
+All tests are in `tests/acceptance/test_us3_dynamics.py`.
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Free fall matches the formula within 0.6 % after 1 s | ✅ Pass | `test_free_fall_after_1_s_within_0_6_percent` |
+| Free fall stays within 0.6 % for longer durations | ✅ Pass | `test_free_fall_after_2_s_within_0_6_percent` |
+| Velocity is updated before altitude (semi-implicit Euler) | ✅ Pass | `test_one_step_updates_velocity_before_altitude` |
+| Hover keeps the same height | ✅ Pass | `test_hover_keeps_the_same_height_for_2000_steps` (every step within ε), `test_hover_is_bit_exact_when_thrust_is_mass_times_gravity` (D-3) |
+| Excess thrust accelerates the drone upward | ✅ Pass | `test_excess_thrust_accelerates_upward` |
+| Heavier drone accelerates less for the same thrust | ✅ Pass | `test_heavier_drone_accelerates_less` (1 kg, 2 kg) |
+| Linear drag opposes motion and is proportional to velocity | ✅ Pass | `test_drag_used_in_a_step_is_minus_b_times_start_velocity` (+4, −4, 0 m/s; drag measured from the velocity change) |
+| Linear drag limits falling speed to m·g/b | ✅ Pass | `test_drag_limits_falling_speed_to_m_g_over_b` (monotonic, ≤ 19.62 every step, within 0.6 % at the end) |
+| Thrust above the maximum is capped silently | ⚠️ Partial | `test_thrust_above_maximum_is_capped_silently` (25, 20.001, next double above 20; no warnings) ✅. The recorded value, `test_thrust_used_is_recorded_after_limits`, is strict xfail until US-6 |
+| Negative thrust command is set to 0 silently | ⚠️ Partial | `test_negative_thrust_is_set_to_zero_silently` (−5, −0.001, −5e-324) ✅. Recorded value: strict xfail until US-6 |
+| Thrust at and inside the limits is used as commanded | ✅ Pass | `test_thrust_at_and_inside_limits_is_used_as_commanded` (20, 19.999, 0.001, 0), `test_thrust_just_inside_limits_is_not_capped` |
+| Non-finite thrust command is rejected | ⚠️ Partial | `test_non_finite_thrust_is_rejected_and_nothing_changes`, `test_non_number_thrust_is_rejected_and_nothing_changes` ✅. `test_non_finite_thrust_leaves_records_unchanged` strict xfail until US-6 |
+| Resting on the ground with insufficient thrust | ⚠️ Partial | `test_resting_on_ground_with_insufficient_thrust` (altitude/velocity every step, time) ✅. `test_resting_on_ground_records_zero_acceleration_and_drag` strict xfail until US-6 |
+| Taking off from the ground | ✅ Pass | `test_taking_off_from_the_ground` (also the hand values 0.04905 m/s, 0.00024525 m) |
+| Landing stops at the floor and the run continues | ⚠️ Partial | `test_landing_stops_at_floor_and_run_continues` (lands on step 90 as hand-calculated) ✅. `test_landing_step_records_zero_acceleration_and_drag` strict xfail until US-6 |
+| Landing at speed does not bounce | ⚠️ Partial | `test_landing_at_speed_does_not_bounce` ✅. `test_landing_at_speed_records_zero_acceleration_and_drag` strict xfail until US-6 |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| D-3 formulation | `D = -(b*v_start)`, `a = ((T - m*g) + D) / m`, `vn = v + a*DT`, `hn = h + vn*DT` | Single-step and takeoff hand values within ε; bit-exact hover |
+| D-4 floor | Floor when `hn <= 0 and vn < 0`; altitude and velocity set to exactly `0.0` | `test_floor_applies_when_landing_exactly_on_zero_while_moving_down` (L), `…just_below_the_limit` (L−ε), `test_floor_does_not_apply_just_above_the_limit` (L+ε) |
+| Record invariant | `altitude ≥ 0` and `altitude == 0 ⇒ velocity ≥ 0` after every step | `test_no_record_is_on_the_ground_while_moving_down`; landing tests check every step |
+| Thrust capping | `T_used = min(max(held, 0), max_thrust)`, silent, applied at use time | Capping tests at L and L ± one double, compared byte for byte with the limit value; warnings recorded and asserted empty |
+| Thrust command check | Non-finite gives `ValueError`, non-number gives `TypeError`, both naming "thrust"; checked before any change in `step` and `run` | Rejection tests assert unchanged state and held thrust |
+| All-or-nothing | `run` checks `n` and `thrust` before changing anything; `run(0, thrust=x)` checks `x` but does not hold it | US-2 and US-3 rejection tests |
+| Concurrency | Not thread-safe, no locking; instances share no state | Inspection |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- The record-field parts of six US-3 scenarios (thrust used, acceleration, drag on floor and rest steps, records unchanged after rejection) are strict xfail until US-6. Caused by IQ-2's approach (option a), applied to US-3.
+- Interim until US-6: altitude, velocity and the step count are held in fields instead of being derived from the last record, and `step()` returns `None` instead of the new `Record`.
+
+### Process Notes
+
+- Two red-phase tests passed against US-2's frozen altitude and velocity (bit-exact hover, drag at 0 m/s). Before the red commit they were strengthened with checks that the drone actually moves (thrust above hover must lift it; the drag test uses m·g + 1 N). No test changed after the red commit.
+
+### Version Control Actions
+
+- Branch: `feature/us3-vertical-dynamics`
+- Commits:
+  - `08dc3d4` docs(approval): move US-2 implementation approval to history
+  - `1f5fad7` test(dynamics): add failing US-3 vertical dynamics acceptance tests (red, before code)
+  - `543347c` feat(dynamics): add vertical dynamics, thrust limits and ground floor
+  - docs(implementation): log the US-3 implementation pass (this entry and the signed approval entry)
+- PR: opened against `main` after the docs commit, merged with a merge commit (pass signed by the operator before the docs commit)
+
+---
+
 ## Pass: 2026-11-14 — US-2 Advance the simulation in fixed time steps
 
 **Branch:** `feature/us2-fixed-time-steps`
