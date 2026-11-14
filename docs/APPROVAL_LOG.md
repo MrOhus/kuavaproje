@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Implementation — US-4 Deterministic runs and US-5 Open-loop thrust input
+_No active entry. The next pipeline stage (requirement analysis, Round 2) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Implementation — US-4 Deterministic runs and US-5 Open-loop thrust input (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Implementation
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (passes 2026-11-14, US-4 and US-5). Input: docs/design/DESIGN.md (US-4, US-5, approved 13.11.2026), docs/architecture/ARCHITECTURE.md (approved 14.11.2026)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #8 (`feature/us4-deterministic-runs`, merge commit `05cf2db`) and PR #9 (`feature/us5-open-loop-thrust`, merge commit `0bfd04e`) on `main`
 - **Decisions / Scope Covered**:
   - US-4 covered by acceptance tests (`fca3b74`, branch `feature/us4-deterministic-runs`). No production code was needed; determinism already follows from US-2/3/6. 4 of 4 planted faults caught in scratch copies.
   - US-5 covered by acceptance tests (`9ae263c`, branch `feature/us5-open-loop-thrust`, stacked on the US-4 branch). No production code was needed; holding, capping and rejecting commands already exist. 5 of 5 planted faults caught.
@@ -24,12 +33,6 @@
   - IQ-8 — US-5 stacked on the US-4 branch, one shared Pending entry, docs uncommitted until sign-off (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Implementation — US-6 Output records (Approved 14.11.2026)
 
