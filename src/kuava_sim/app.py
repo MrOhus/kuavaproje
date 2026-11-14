@@ -76,6 +76,7 @@ class App:
         panel = tk.Frame(self.root)
         panel.pack(side=tk.TOP, fill=tk.X, padx=8, pady=4)
         self.sliders = {}
+        self._gain_vars = []  # keep the Tk variables alive
         for column, (name, (low, high, start)) in enumerate(SLIDERS.items()):
             scale = tk.Scale(
                 panel, from_=low, to=high, resolution=SLIDER_RESOLUTION,
@@ -85,8 +86,13 @@ class App:
             if name == "setpoint":  # applies only when let go (OQ-36)
                 scale.bind("<ButtonRelease-1>", self._on_setpoint_release)
                 scale.bind("<KeyRelease>", self._on_setpoint_release)
-            else:  # gains apply while dragging
-                scale.configure(command=lambda value, n=name: self.session.set_gain(n, value))
+            else:  # gains apply while dragging, whether or not the window is drawn:
+                # a Tk variable is written at once on every change, while a Scale's
+                # command only runs when the slider is redrawn on screen.
+                var = tk.DoubleVar(self.root, value=start)
+                scale.configure(variable=var)
+                var.trace_add("write", lambda *_, n=name, v=var: self.session.set_gain(n, v.get()))
+                self._gain_vars.append(var)
             scale.grid(row=0, column=column, padx=6)
             self.sliders[name] = scale
 
