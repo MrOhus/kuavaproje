@@ -30,6 +30,17 @@ class Record(NamedTuple):
 _WIDTH = len(Record._fields)  # doubles per record
 
 
+class ControllerStatus(NamedTuple):
+    """Read-only snapshot of the PID controller (NaN settings while off)."""
+
+    on: bool
+    kp: float  # N/m
+    ki: float  # N/(m·s)
+    kd: float  # N·s/m
+    setpoint: float  # m
+    integral: float  # N, the integral contribution I
+
+
 class RecordLog(Sequence):
     """Read-only view of the records, stored as one flat array('d')."""
 
@@ -62,6 +73,14 @@ def _finite_float(name, value):
     value = float(value)
     if not math.isfinite(value):
         raise ValueError(f"{name} must be a finite number (got {value})")
+    return value
+
+
+def _non_negative(name, value):
+    """Return value as a finite float that is not below 0."""
+    value = _finite_float(name, value)
+    if value < 0.0:
+        raise ValueError(f"{name} must not be below 0 (got {value})")
     return value
 
 
@@ -129,6 +148,46 @@ class Simulation:
         self._data = array("d")
         self._records = RecordLog(self._data)
         self._data.extend(self._first_record())
+        # PID controller (ARCHITECTURE_3dbd8e9.md); settings are NaN while off.
+        self._ctrl_on = False
+        self._kp = self._ki = self._kd = self._setpoint = math.nan
+        self._integral = 0.0  # N
+        self._changes = []  # (record index, setpoint) per setpoint change
+
+    def enable_controller(self, *, kp, ki, kd, setpoint) -> None:
+        """Turn the PID controller on; this counts as a setpoint change."""
+        if self._ctrl_on:
+            raise RuntimeError(
+                "the controller is already on; use set_gains or set_setpoint"
+            )
+        kp = _non_negative("kp", kp)
+        ki = _non_negative("ki", ki)
+        kd = _non_negative("kd", kd)
+        setpoint = _non_negative("setpoint", setpoint)
+        self._kp, self._ki, self._kd, self._setpoint = kp, ki, kd, setpoint
+        self._integral = 0.0
+        self._ctrl_on = True
+        self._changes.append((self.step_count, setpoint))
+
+    def disable_controller(self) -> None:
+        """Turn the controller off; the held thrust stays at its last command."""
+        if not self._ctrl_on:
+            return
+        self._ctrl_on = False
+        self._kp = self._ki = self._kd = self._setpoint = math.nan
+        self._integral = 0.0
+
+    @property
+    def controller(self) -> ControllerStatus:
+        return ControllerStatus(
+            self._ctrl_on, self._kp, self._ki, self._kd, self._setpoint, self._integral
+        )
+
+    def _reject_manual_thrust(self, thrust) -> None:
+        if self._ctrl_on and thrust is not None:
+            raise RuntimeError(
+                "the controller is on; manual thrust commands are rejected"
+            )
 
     def _first_record(self) -> tuple:
         """Time-0 record (DESIGN.md I-3)."""
@@ -145,6 +204,7 @@ class Simulation:
 
         A given thrust becomes the held command.
         """
+        self._reject_manual_thrust(thrust)
         if thrust is not None:
             self._held_thrust = _finite_float("thrust", thrust)
         return Record(*self._advance())
@@ -155,6 +215,7 @@ class Simulation:
             raise TypeError(f"n must be a whole number of steps (got {n!r})")
         if n < 0:
             raise ValueError(f"n must not be negative (got {n})")
+        self._reject_manual_thrust(thrust)
         if thrust is not None:
             thrust = _finite_float("thrust", thrust)
         if n == 0:
