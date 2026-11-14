@@ -177,6 +177,31 @@ class Simulation:
         self._kp = self._ki = self._kd = self._setpoint = math.nan
         self._integral = 0.0
 
+    def _require_controller_on(self) -> None:
+        if not self._ctrl_on:
+            raise RuntimeError("the controller is off; turn it on first")
+
+    def set_gains(self, *, kp=None, ki=None, kd=None) -> None:
+        """Change one or more gains; they apply from the next step."""
+        if kp is None and ki is None and kd is None:
+            raise TypeError("set_gains needs at least one of kp, ki, kd")
+        self._require_controller_on()
+        new = {}
+        for name, value in (("kp", kp), ("ki", ki), ("kd", kd)):
+            if value is not None:
+                new[name] = _non_negative(name, value)
+        for name, value in new.items():
+            setattr(self, "_" + name, value)
+
+    def set_setpoint(self, setpoint) -> None:
+        """Change the setpoint; a different value starts a new metrics result."""
+        self._require_controller_on()
+        setpoint = _non_negative("setpoint", setpoint)
+        if setpoint == self._setpoint:
+            return
+        self._setpoint = setpoint
+        self._changes.append((self.step_count, setpoint))
+
     @property
     def controller(self) -> ControllerStatus:
         return ControllerStatus(
