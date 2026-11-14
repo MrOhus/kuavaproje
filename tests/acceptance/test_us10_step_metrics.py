@@ -218,6 +218,6 @@ def test_rejected_setpoint_change_creates_no_metrics(bad):
         sim.set_setpoint(bad)
     after = sim.step_metrics()
     assert len(after) == 2
-    assert [struct.pack("<9d", *r[1:4], *r[5:]) for r in after] == [
-        struct.pack("<9d", *r[1:4], *r[5:]) for r in before
+    assert [struct.pack("<8d", *r[1:4], *r[5:]) for r in after] == [
+        struct.pack("<8d", *r[1:4], *r[5:]) for r in before
     ]
