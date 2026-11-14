@@ -6,10 +6,13 @@ from .simulation import (
     DT,
     MIN_THRUST,
     STEP_RATE_HZ,
+    RISE_LIMITS,
     Record,
     RecordLog,
+    SETTLING_BAND,
     SimConfig,
     Simulation,
+    StepMetrics,
 )
 
 __all__ = [
@@ -18,8 +21,11 @@ __all__ = [
     "DT",
     "MIN_THRUST",
     "STEP_RATE_HZ",
+    "RISE_LIMITS",
     "Record",
     "RecordLog",
+    "SETTLING_BAND",
     "SimConfig",
     "Simulation",
+    "StepMetrics",
 ]

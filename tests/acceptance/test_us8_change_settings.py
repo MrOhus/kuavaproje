@@ -3,7 +3,7 @@
 Expected behaviour comes from docs/design/DESIGN_0bfd04e.md (US-8, OQ-28,
 OQ-33) and docs/architecture/ARCHITECTURE_3dbd8e9.md (set_gains / set_setpoint,
 all-or-nothing checks, D-10 integral first, D-14 lifecycle).
-Scenarios that need a later story are strict xfail until it lands (IQ-9).
+Scenarios that needed a later story were strict xfail until it landed (IQ-9).
 """
 
 import math
@@ -13,9 +13,6 @@ import pytest
 
 from kuava_sim import SimConfig, Simulation
 
-needs_us10 = pytest.mark.xfail(
-    strict=True, reason="IQ-9: needs step_metrics() from US-10; remove when US-10 lands"
-)
 
 DT = 0.005
 M, G = 1.0, 9.81
@@ -106,7 +103,6 @@ def test_after_a_setpoint_change_the_drone_works_toward_the_new_setpoint():
     assert abs(sim.altitude - 20.0) < 0.5
 
 
-@needs_us10
 def test_a_setpoint_change_starts_a_new_metrics_result_at_that_record():
     sim = controlled()
     sim.run(400)
@@ -134,7 +130,6 @@ def test_changing_ki_keeps_the_integral_and_stops_its_growth():
 # --- Scenario: A gain change does not start a new metrics result --------------
 
 
-@needs_us10
 @pytest.mark.parametrize("gain", ["kp", "ki", "kd"])
 def test_a_gain_change_does_not_start_a_new_metrics_result(gain):
     sim = controlled()
@@ -154,7 +149,6 @@ def test_setting_the_same_setpoint_again_changes_nothing():
     assert snapshot(sim) == before
 
 
-@needs_us10
 def test_setting_the_same_setpoint_again_adds_no_metrics_result():
     sim = controlled()
     sim.run(10)

@@ -3,7 +3,7 @@
 Expected behaviour comes from docs/design/DESIGN_0bfd04e.md (US-7, OQ-31,
 OQ-32, OQ-33) and docs/architecture/ARCHITECTURE_3dbd8e9.md (controller state,
 D-8 API with RuntimeError for state conflicts, D-14 lifecycle).
-Scenarios that need a later story are strict xfail until it lands (IQ-9).
+Scenarios that needed a later story were strict xfail until it landed (IQ-9).
 """
 
 import math
@@ -13,9 +13,6 @@ import pytest
 
 from kuava_sim import SimConfig, Simulation
 
-needs_us10 = pytest.mark.xfail(
-    strict=True, reason="IQ-9: needs step_metrics() from US-10; remove when US-10 lands"
-)
 
 GAINS = dict(kp=4.0, ki=1.0, kd=3.0, setpoint=10.0)
 SETTINGS = ["kp", "ki", "kd", "setpoint"]
@@ -152,7 +149,6 @@ def test_large_setpoint_is_accepted():
 # --- Scenario: Turning on counts as the first setpoint change -----------------
 
 
-@needs_us10
 def test_turning_on_counts_as_the_first_setpoint_change():
     sim = make()
     sim.run(40, thrust=0.0)
