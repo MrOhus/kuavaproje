@@ -7,8 +7,9 @@ the user's input to it. Everything runs in the Tk thread (D-17).
 import math
 import time
 import tkinter as tk
+from tkinter import ttk
 
-from .live import SLIDER_RESOLUTION, SLIDERS, THRUST_Y_RANGE, LiveSession
+from .live import SLIDER_RESOLUTION, SLIDERS, THRUST_Y_RANGE, LiveSession, format_row
 
 FRAME_INTERVAL_MS = 16  # target about 60 fps
 
@@ -27,6 +28,15 @@ ALTITUDE_COLOR = "#1f6fb4"
 SETPOINT_COLOR = "#d62728"
 THRUST_COLOR = "#2b2b2b"
 GRID_COLOR = "#9a9a9a"
+
+TABLE_COLUMNS = (
+    ("time", "Time of change (s)", 120),
+    ("change", "From → to (m)", 130),
+    ("rise", "Rise time (s)", 110),
+    ("overshoot", "Overshoot (%)", 110),
+    ("settling", "Settling time (s)", 120),
+    ("error", "Steady-state error (m)", 150),
+)
 
 
 def _x(t, x0, x1):
@@ -55,6 +65,7 @@ class App:
         root.protocol("WM_DELETE_WINDOW", self.close)
         self._build_sliders()
         self._build_plots()
+        self._build_table()
         self._build_status()
         self._job = root.after(FRAME_INTERVAL_MS, self._loop)
 
@@ -102,6 +113,16 @@ class App:
         canvas.create_text(LEFT + 6, TOP + 4, text=title, anchor="nw", fill="#444444")
         return canvas
 
+    def _build_table(self) -> None:
+        self.table = ttk.Treeview(
+            self.root, columns=[c[0] for c in TABLE_COLUMNS], show="headings", height=5
+        )
+        for key, title, width in TABLE_COLUMNS:
+            self.table.heading(key, text=title)
+            self.table.column(key, width=width, anchor="e")
+        self.table.pack(side=tk.TOP, padx=8, pady=4, fill=tk.X)
+        self._shown_rows = None
+
     def _build_status(self) -> None:
         status = tk.Frame(self.root)
         status.pack(side=tk.BOTTOM, fill=tk.X, padx=8, pady=4)
@@ -125,7 +146,17 @@ class App:
         session = self.session
         session.tick(now)
         self._draw_plots()
+        self._draw_table()
         self.fps_label.configure(text=f"{session.fps(now)} fps")
+
+    def _draw_table(self) -> None:
+        rows = [format_row(m) for m in self.session.metrics_rows()]
+        if rows == self._shown_rows:
+            return
+        self.table.delete(*self.table.get_children())
+        for row in rows:  # newest first, so newest on top
+            self.table.insert("", tk.END, values=row)
+        self._shown_rows = rows
 
     def _draw_plots(self) -> None:
         session = self.session
