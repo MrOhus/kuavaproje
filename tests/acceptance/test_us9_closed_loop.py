@@ -14,9 +14,6 @@ import pytest
 
 from kuava_sim import SimConfig, Simulation
 
-needs_us10 = pytest.mark.xfail(
-    strict=True, reason="IQ-9: needs step_metrics() from US-10; remove when US-10 lands"
-)
 
 DT = 0.005
 
@@ -170,7 +167,6 @@ def test_closed_loop_runs_give_identical_records():
     assert len(set(a.records.column("thrust_used"))) > 1000  # really controlled
 
 
-@needs_us10
 def test_closed_loop_runs_give_identical_metrics():
     a, b = closed_loop_run(), closed_loop_run()
     assert [struct.pack("<9d", *r[1:]) for r in a.step_metrics()] == [
