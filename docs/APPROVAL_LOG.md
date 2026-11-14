@@ -4,7 +4,21 @@
 
 ## Active Entry
 
-_No active entry. The next pipeline stage (implementation) opens a new `Pending Approval` entry here._
+### Implementation — US-6 Output records
+
+- **Status**: Approved
+- **Stage**: Implementation
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (pass 2026-11-14, US-6). Input: docs/design/DESIGN.md (US-6, approved 13.11.2026), docs/architecture/ARCHITECTURE.md (approved 14.11.2026)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - US-6 implemented: `Record` named tuple; records in one flat `array('d')`, 6 doubles per record (D-5); read-only `records` view with `column()`; time-0 record (I-3); floor and rest records with zero acceleration and drag (I-2); `step()` returns the new `Record`; state read from the last record.
+  - Red tests committed before code (`cccecfd`), together with removing the 12 strict xfail markers from US-1/2/3. 180 passed, 0 xfailed. No planted-bug check (operator instruction).
+  - Story order changed to US-6 before US-4 and US-5 (IQ-3).
+- **Open Questions Resolved This Session**:
+  - IQ-3 — US-6 next, because it turns the 12 expected failures into real checks and lets US-4 compare records directly.
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
 
 ---
 
