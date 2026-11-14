@@ -18,3 +18,4 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+addopts = "-rs"  # print the reason for every skipped test (AQ-21)

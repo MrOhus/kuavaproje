@@ -4,6 +4,436 @@ Append one entry per implementation pass (one story per pass), **most recent fir
 
 ---
 
+## Pass: 2026-11-14 — US-19 README and one-command start and test
+
+**Branch:** `feature/us19-readme-commands` (stacked on `feature/us18-error-messages`; IQ-10 practice)
+**Traces to:** `docs/design/DESIGN_f351eee.md` (US-19, OQ-41; metric definitions from `DESIGN_0bfd04e.md` OQ-30), `docs/architecture/ARCHITECTURE_899eaea.md` (D-22, GUI tests)
+**Approval basis:** Requirement Analysis (Round 3) approved 14.11.2026; Solution Architecture (Round 3) approved 14.11.2026 (see `docs/APPROVAL_LOG.md`)
+**Mode:** standing rules: all stories of the round end to end; small coding details decided by the developer and listed below (rule 3).
+
+**Files:** `README.md`, `pyproject.toml` (`addopts = "-rs"`), `tests/acceptance/test_us19_readme_and_commands.py`.
+
+**Red proof:** the tests were committed in `0815273` before the README and config changed. 4 failed (the README was a title only; skip reasons were not printed). 3 checks of the existing setup already held and must keep holding: the dev extra has pytest and control, one command collects every story's tests, and a broken test exits non-zero. `git diff 0815273 70cd2f4 -- tests/` is empty.
+
+**Result:** 472 passed, 0 xfailed (full suite). The editable install was checked in a fresh venv.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| The README covers setup, start, tests and the metrics | ✅ Pass | `test_readme_states_the_python_version_and_the_three_commands`, `test_readme_defines_the_four_metrics_as_round_2_does`, `test_readme_names_what_the_app_shows_and_its_controls`, `test_setup_command_installs_the_test_tools` |
+| One command runs every test | ✅ Pass | `test_one_command_collects_the_tests_of_every_story` (US-1 … US-19, including GUI and python-control), `test_skipped_tests_print_their_reason` |
+| The test command reports a failing test | ✅ Pass | `test_a_broken_test_is_reported_with_a_non_zero_exit_code` |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| D-22 | Skipped window tests print their reason in the pytest summary | `-rs` in `pyproject.toml`; `test_skipped_tests_print_their_reason` |
+| D-1 / D-16 | No runtime dependencies | `test_setup_command_installs_the_test_tools` asserts `dependencies == []` |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+None.
+
+### Coding Details Decided (rule 3)
+
+- The README also has a short "Using the simulation from code" example and links to the project documents.
+- The test-command checks run the project's pytest configuration on a throw-away test file in `tmp_path`.
+
+### Version Control Actions
+
+- Branch: `feature/us19-readme-commands` (from `feature/us18-error-messages` at `a86e63d`)
+- Commits: `0815273` test (red), `70cd2f4` docs(readme), `1685e40` docs(readme): run setup first and activate `.venv` per terminal (operator request after sign-off: `python -m kuava_sim` failed with "No module named kuava_sim" until the setup ran; the US-19 tests still pass)
+- docs(implementation): log the Round 3 implementation passes (all eight entries and the signed shared approval entry), after the operator signs
+- PR: opened against `main` and merged with a merge commit, in story order (US-12 first), after the operator signs
+
+---
+
+## Pass: 2026-11-14 — US-18 Clear error messages instead of crashes
+
+**Branch:** `feature/us18-error-messages` (stacked on `feature/us17-pause-reset`)
+**Traces to:** `docs/design/DESIGN_f351eee.md` (US-18, OQ-41), `docs/architecture/ARCHITECTURE_899eaea.md` (D-23; LiveSession `fail`, `message`; App error routing)
+**Approval basis:** as for US-19. **Mode:** as for US-19.
+
+**Files:** `src/kuava_sim/live.py`, `src/kuava_sim/app.py`, `tests/acceptance/test_us18_error_messages.py`.
+
+**Red proof:** the tests were committed in `c07a581` before any code. 12 failed: no `fail`, `message` or error label yet. `git diff c07a581 a86e63d -- tests/` is empty.
+
+**Result:** 465 passed.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| An unexpected error is reported, not a crash | ✅ Pass | `test_an_error_during_a_frame_is_shown_in_red_and_pauses`, `test_an_error_in_a_button_callback_is_shown_and_pauses`, `test_fail_pauses_and_sets_a_plain_message` (5 kinds), `test_a_repeated_error_does_not_pile_up` |
+| A rejected simulation request is shown with its message | ✅ Pass | `test_a_rejected_request_shows_the_simulation_message` (real slider release with the controller off) |
+| The user can continue after an error | ✅ Pass | `test_reset_after_an_error_restarts_from_time_0_and_clears_the_message`, `test_resume_after_an_error_clears_the_message` |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| D-23 | Errors in the frame loop and in Tk callbacks go to `fail`: the simulation pauses and the window stays open | Frame and button-callback tests |
+| D-23 | The message is plain: `str(exc)` for ValueError/TypeError/RuntimeError, otherwise "Unexpected error: …" or "Unexpected error (<type>)"; it is shown in red | Parametrized `fail` test; label text and colour asserted |
+| D-23 | Nothing is printed anywhere and there are no pop-ups | `capfd` is empty in every window test |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+None.
+
+### Coding Details Decided (rule 3)
+
+- A ValueError, TypeError or RuntimeError with an empty message is shown as "Unexpected error (<type>)", like other errors without a message.
+- One `_draw_status()` updates the Pause/Resume text, the gust button state and the error label. It runs on every frame and right after a click or an error.
+
+### Version Control Actions
+
+- Branch: `feature/us18-error-messages` (from `feature/us17-pause-reset` at `15a3e33`)
+- Commits: `c07a581` test (red), `a86e63d` feat(app)
+- PR: as for US-19
+
+---
+
+## Pass: 2026-11-14 — US-17 Pause and reset
+
+**Branch:** `feature/us17-pause-reset` (stacked on `feature/us16-wind-gust`)
+**Traces to:** `docs/design/DESIGN_f351eee.md` (US-17, OQ-37), `docs/architecture/ARCHITECTURE_899eaea.md` (D-18; LiveSession `pause`, `resume`, `toggle_pause`, `reset`; real-time pacing re-anchor)
+**Approval basis:** as for US-19. **Mode:** as for US-19.
+
+**Files:** `src/kuava_sim/live.py`, `src/kuava_sim/app.py`, `tests/acceptance/test_us17_pause_reset.py`. The red commit also removes the last three strict xfail markers (US-14 paused plots, US-15 reset table, US-16 paused gust).
+
+**Red proof:** the tests and marker removals were committed in `49b5a67` before any code. 12 failed: no pause, reset or buttons yet. `git diff 49b5a67 15a3e33 -- tests/` is empty.
+
+**Result:** 453 passed, 0 xfailed.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Pause and resume | ✅ Pass | `test_paused_session_takes_no_steps`, `test_resume_continues_from_exactly_the_paused_state` (records identical to an unpaused run), `test_toggle_pause_switches_both_ways` |
+| Sliders work while paused and apply on resume | ✅ Pass | `test_sliders_work_while_paused_and_apply_on_resume` (change at the paused step; next thrust from the formula), `test_window_pause_button_and_sliders_while_paused` |
+| Reset returns to the start and keeps the slider values | ✅ Pass | `test_reset_returns_to_the_start_with_the_current_slider_values` (new simulation, integral 0, no gust left), `test_window_reset_button_clears_plots_and_table` |
+| Reset keeps the pause state | ✅ Pass | `test_reset_keeps_the_pause_state[running]`, `[paused]` |
+
+**Earlier scenarios now complete** (markers removed in `49b5a67`): US-14 "The plots stop changing while paused"; US-15 "Reset clears the metrics table"; US-16 "The gust button does nothing while paused".
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| Real-time pacing | Resume and reset re-anchor the clock, so no simulated time passes while paused | Resume test (250 steps both ways), reset test (100 steps in 0.5 s after the reset) |
+| D-18 | Reset builds a new `Simulation` with the current slider values; the pause state is kept | `sim is not old_sim`; controller status; outline test |
+| OQ-37 | The gust is ignored and its button disabled while paused | US-16 paused-gust test |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+None.
+
+### Coding Details Decided (rule 3)
+
+- `tick` still records the frame time while paused, so the fps display keeps updating.
+
+### Version Control Actions
+
+- Branch: `feature/us17-pause-reset` (from `feature/us16-wind-gust` at `7fe36cf`)
+- Commits: `49b5a67` test (red), `15a3e33` feat(app)
+- PR: as for US-19
+
+---
+
+## Pass: 2026-11-14 — US-16 Wind gust disturbance
+
+**Branch:** `feature/us16-wind-gust` (stacked on `feature/us15-metrics-table`)
+**Traces to:** `docs/design/DESIGN_f351eee.md` (US-16, OQ-35), `docs/architecture/ARCHITECTURE_899eaea.md` (gust state, step-with-gust predicate, D-19, D-20)
+**Approval basis:** as for US-19. **Mode:** as for US-19.
+
+**Files:** `src/kuava_sim/simulation.py` (`GUST_FORCE`, `GUST_STEPS`, `gust()`, step with gust), `src/kuava_sim/__init__.py`, `src/kuava_sim/live.py` (`press_gust`), `src/kuava_sim/app.py` (Wind gust button), `tests/acceptance/test_us16_wind_gust.py`. The red commit also removes the US-12 replay xfail marker.
+
+**Red proof:** the tests were committed in `1af3b69` before any code. 12 failed: no gust yet. Two invariant checks already passed and still pass: with no press every step is the Round 2 step, and records keep six fields. `git diff 1af3b69 7fe36cf -- tests/` is empty.
+
+**Result:** 441 passed, 3 xfailed (waiting for US-17).
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| A gust is a 5 N downward force for 100 steps | ✅ Pass | `test_constants_are_5_newtons_for_100_steps`, `test_gust_acts_on_exactly_the_next_100_steps` (bit-exact acceleration from the record's own thrust and drag; step k+101 free), `test_gust_changes_the_records_from_the_next_step_only` |
+| A press during a gust restarts it instead of adding to it | ✅ Pass | `test_a_second_press_restarts_the_100_steps_and_never_doubles_the_force` |
+| The controller recovers after a gust | ✅ Pass | `test_controller_recovers_after_a_gust`, `test_controller_is_not_told_about_the_gust` |
+| A gust on the ground does not push the drone below the ground | ✅ Pass | `test_gust_on_the_ground_keeps_the_drone_at_altitude_0` |
+| Gusts are deterministic | ✅ Pass | `test_same_presses_at_the_same_steps_give_identical_records`, `test_run_n_after_a_gust_equals_n_single_steps` |
+| Without a gust press there is no disturbance | ✅ Pass | `test_without_a_press_every_step_is_the_round_2_step`, `test_records_keep_their_six_fields` |
+| The gust button does nothing while paused | ✅ Pass (after US-17) | `test_gust_button_is_disabled_and_ignored_while_paused` |
+| Session and button | ✅ Pass | `test_session_press_gust_pushes_the_live_drone`, `test_gust_button_starts_a_gust` |
+
+**Earlier scenario now complete** (marker removed in `1af3b69`): US-12 "The live simulation is the same deterministic simulation as without the GUI" (replay with slider changes and gusts, records bit-identical).
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| Step with gust | `a = (((t_used − m·g) + drag) − 5) / m` on steps k+1 … k+100; the Round 2 expression otherwise | Bit-exact acceleration checks |
+| Gust state | A press restarts the count; the force is never 10 N | Restart test |
+| D-20 | Six record fields; the acceleration includes the gust | Field test; acceleration checks |
+| D-4 | The floor holds the drone at 0 during a gust | Ground test |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+None.
+
+### Coding Details Decided (rule 3)
+
+- The button calls a private `_on_gust`, so it always reaches the current session.
+
+### Version Control Actions
+
+- Branch: `feature/us16-wind-gust` (from `feature/us15-metrics-table` at `20ab8d1`)
+- Commits: `1af3b69` test (red), `7fe36cf` feat(sim)
+- PR: as for US-19
+
+---
+
+## Pass: 2026-11-14 — US-15 Metrics after each setpoint change
+
+**Branch:** `feature/us15-metrics-table` (stacked on `feature/us14-live-plots`)
+**Traces to:** `docs/design/DESIGN_f351eee.md` (US-15, OQ-39), `docs/architecture/ARCHITECTURE_899eaea.md` (`last_step_metrics()`, LiveSession rows, D-21, display rounding)
+**Approval basis:** as for US-19. **Mode:** as for US-19.
+
+**Files:** `src/kuava_sim/simulation.py` (`last_step_metrics()`, shared `_metrics(j)`), `src/kuava_sim/live.py` (`format_row`, `metrics_rows`, refresh), `src/kuava_sim/app.py` (table), `tests/acceptance/test_us15_metrics_table.py`.
+
+**Red proof:** the tests were committed in `414e5a0` before any code. 15 failed: no `last_step_metrics`, `metrics_rows`, `format_row` or table yet. `git diff 414e5a0 20ab8d1 -- tests/` is empty.
+
+**Result:** 427 passed, 3 xfailed.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| One row per setpoint change, newest on top | ✅ Pass | `test_one_row_per_setpoint_change_newest_on_top`, `test_display_columns_and_rounding`, `test_window_table_has_the_six_columns_and_one_row_per_change` |
+| The newest row updates live | ✅ Pass | `test_newest_row_is_recomputed_at_most_every_half_second`, `test_older_rows_keep_their_finished_values` |
+| The shown metrics equal the simulation's metrics | ✅ Pass | `test_rows_equal_step_metrics_right_after_a_refresh`, `test_last_step_metrics_equals_the_newest_step_metrics_result` (5 cases), `test_last_step_metrics_follows_a_zero_size_change`, `test_last_step_metrics_is_none_before_the_controller_was_ever_on` |
+| A metric that is not reached is shown as such | ✅ Pass | `test_nan_is_shown_as_not_reached`, `test_a_fresh_change_shows_not_reached_never_nan_zero_or_blank` |
+| Reset clears the metrics table | ✅ Pass (after US-17) | `test_reset_leaves_only_the_new_start_row` |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| `last_step_metrics()` | Equals `step_metrics()[-1]` field by field (NaN = NaN); `None` before the controller was ever on | Core tests |
+| D-21 | Finished rows are frozen at the next change; only the newest is recomputed, at most every 0.5 s | Refresh and frozen-row tests |
+| Display | Rounding for display only; NaN shown as "not reached" | `format_row` tests |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+None.
+
+### Coding Details Decided (rule 3)
+
+- `step_metrics()` and `last_step_metrics()` share `_metrics(j)`, which slices the altitudes straight from the record array instead of copying the whole column. The values are the same floats as before: all Round 2 metric tests still pass with exact equality.
+- `release_setpoint` computes the finished row first, then applies the change, and keeps the row only if the setpoint really changed. A rejected value therefore leaves the rows untouched.
+- The next refresh comes after `max(0.5 s, 20 × the last recompute time)`.
+- The table is rebuilt only when its shown text changes.
+
+### Version Control Actions
+
+- Branch: `feature/us15-metrics-table` (from `feature/us14-live-plots` at `9414b2b`)
+- Commits: `414e5a0` test (red), `20ab8d1` feat(app)
+- PR: as for US-19
+
+---
+
+## Pass: 2026-11-14 — US-14 Live plots
+
+**Branch:** `feature/us14-live-plots` (stacked on `feature/us13-sliders`)
+**Traces to:** `docs/design/DESIGN_f351eee.md` (US-14, OQ-38, OQ-40), `docs/architecture/ARCHITECTURE_899eaea.md` (plot buffer, PLOT_WINDOW, PLOT_EVERY, thrust axis, D-16, D-22)
+**Approval basis:** as for US-19. **Mode:** as for US-19.
+
+**Files:** `src/kuava_sim/live.py` (plot buffer, x and y ranges, fps), `src/kuava_sim/app.py` (canvases, axes, fps label), `tests/acceptance/test_us14_live_plots.py`, `tests/acceptance/gui_check.py` (test-only frame-rate check). The red commit also removes the US-12 plotted-altitude xfail marker.
+
+**Red proof:** the tests were committed in `9ae2413` before any code. 13 failed. Before that commit, the 5 s frame-rate test was made to also require that the plots were really redrawn, because it would otherwise have passed with no drawing at all. `git diff 9ae2413 9414b2b -- tests/` is empty.
+
+**Result:** 412 passed, 2 xfailed. Measured on this machine: 53.8 fps on average over 10 s, slowest frame 31 ms.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| The plots show setpoint, altitude and the thrust used | ✅ Pass | `test_plot_points_are_altitude_setpoint_and_thrust_used_every_4_steps`, `test_window_draws_altitude_setpoint_and_thrust_on_a_shared_time_axis`, `test_thrust_plot_marks_the_0_and_30_newton_limits` |
+| The plots show the last 20 s, scrolling | ✅ Pass | `test_after_35_s_the_axis_shows_15_to_35_s_and_older_points_are_gone`, `test_just_after_20_s_the_axis_starts_scrolling` |
+| Before 20 s the time axis shows 0 to 20 s | ✅ Pass | `test_before_20_s_the_axis_shows_0_to_20_s` (0, 5, 20 s) |
+| The plotted thrust is the capped thrust | ✅ Pass | `test_plotted_thrust_is_capped_at_30_and_never_below_0` |
+| The frame rate is shown | ✅ Pass | `test_session_measures_the_frame_rate_over_the_last_second`, `test_window_shows_the_measured_frame_rate` |
+| The average frame rate over 5 s is above 30 fps | ✅ Pass | `test_live_app_averages_above_30_fps_over_5_seconds` (real window, real clock) |
+| One slow frame does not fail the check | ✅ Pass | `test_one_slow_frame_does_not_fail_the_check` |
+| An average of 30 fps or less fails | ✅ Pass | `test_an_average_of_30_fps_or_less_fails_and_states_the_average` (30, 29.9), `test_an_average_just_above_30_fps_passes` |
+| The plots stop changing while paused | ✅ Pass (after US-17) | `test_plots_stop_changing_while_paused` |
+
+**Earlier scenario now complete** (marker removed in `9ae2413`): US-12 "The plotted altitude rises toward 10 m".
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| Plot buffer | One point per 4 steps, holding the setpoint used for that step; only the last 20 s; all records kept | Plot-point and 35 s tests |
+| Time axis | `[0, 20]` up to and including 20 s, then `[t − 20, t]` | Axis tests |
+| Thrust axis | Fixed `[−1, 31]` N, with lines at 0 and 30 N | Limit-line test |
+| OQ-40 | Average above 30 fps over 5 s; a single slow frame allowed | Real 5 s test and check tests |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+None.
+
+### Coding Details Decided (rule 3)
+
+- The average frame rate is defined as frame intervals divided by elapsed time: `(n − 1) / (t_last − t_first)`.
+- Canvas size is 900 × 220 px. Axis tick labels are redrawn each frame at round values; the thrust ticks are 0, 10, 20 and 30 N.
+- When only one point exists, it is drawn twice so that the line item is valid.
+
+### Version Control Actions
+
+- Branch: `feature/us14-live-plots` (from `feature/us13-sliders` at `7d08521`)
+- Commits: `9ae2413` test (red), `9414b2b` feat(app)
+- PR: as for US-19
+
+---
+
+## Pass: 2026-11-14 — US-13 Tune the controller with sliders
+
+**Branch:** `feature/us13-sliders` (stacked on `feature/us12-live-app`)
+**Traces to:** `docs/design/DESIGN_f351eee.md` (US-13, OQ-36, OQ-33), `docs/architecture/ARCHITECTURE_899eaea.md` (SLIDERS, LiveSession `set_gain` / `release_setpoint`, App sliders)
+**Approval basis:** as for US-19. **Mode:** as for US-19.
+
+**Files:** `src/kuava_sim/live.py`, `src/kuava_sim/app.py`, `tests/acceptance/test_us13_sliders.py`.
+
+**Red proof:** the tests were committed in `6d24095` before any code. 16 failed: no sliders, `set_gain` or `release_setpoint` yet. The tests then changed once, in `ef98da2` (see Deviations). `git diff ef98da2 7d08521 -- tests/` is empty.
+
+**Result:** 395 passed, 2 xfailed.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Slider ranges, steps and start values | ✅ Pass | `test_slider_range_step_and_start_value` (4 sliders) |
+| A slider cannot go outside its range | ✅ Pass | `test_slider_cannot_go_outside_its_range` (4 sliders, both ends) |
+| A gain takes effect while its slider is dragged | ✅ Pass | `test_gain_takes_effect_while_dragging_and_adds_no_metrics_row`, `test_session_set_gain_applies_from_the_next_step` |
+| The setpoint changes only when the slider is released | ✅ Pass | `test_setpoint_changes_only_when_the_slider_is_released[mouse]`, `[key]`, `test_session_release_setpoint_makes_one_setpoint_change` |
+| Releasing at the current setpoint changes nothing | ✅ Pass | `test_releasing_at_the_current_setpoint_changes_nothing`, `test_session_release_at_the_current_setpoint_changes_nothing` |
+| The GUI has no manual thrust | ✅ Pass | `test_the_window_has_no_thrust_control_and_the_controller_stays_on` |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| SLIDERS | Ranges 0–50 / 0–20 / 0–20 / 0–100, resolution 0.1, starts 4 / 1 / 3 / 10 | Range test |
+| LiveSession | The shown slider value is the value in use (`float` of the slider value) | `scale.get() == values == controller` |
+| OQ-36 | Gains apply on every change; the setpoint only on `<ButtonRelease-1>` / `<KeyRelease>` | Drag and release tests; next thrust checked against the formula |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- **Two test setups fixed after the red commit (operator-approved).**
+  - What they were:
+    1. "Exactly one more step" advanced the fake clock by 0.005 s. After 1 s of frames, `1.0 + 0.005` is just below 1.005 s in floating point, so no step was due and the tests read the previous record. Affected: `test_gain_takes_effect_while_dragging_and_adds_no_metrics_row` and `test_setpoint_changes_only_when_the_slider_is_released[mouse]`.
+    2. The key-release test sent `<KeyRelease>` to a slider without keyboard focus. Tk delivers key events only to the focused widget, so the event never arrived.
+  - Why the red phase did not catch them: in red the sliders did not exist, so the tests failed earlier, at `a.sliders`.
+  - Why the fix does not weaken the tests: only the setup changed. The clock now advances 1/128 s, which is exactly one step, and the slider is given focus before the key release. Every assertion is unchanged.
+  - The tool blocked the first attempt to edit the tests. The operator then approved the fix, and it was committed alone as `ef98da2`.
+
+### Coding Details Decided (rule 3)
+
+- Slider labels show units: "Kp (N/m)", "Ki (N/(m·s))", "Kd (N·s/m)", "Setpoint (m)". The Tk value display (`showvalue`) shows the current value.
+
+### Version Control Actions
+
+- Branch: `feature/us13-sliders` (from `feature/us12-live-app` at `a01cdbf`)
+- Commits: `6d24095` test (red), `ef98da2` test-fix (operator-approved), `7d08521` feat(app)
+- PR: as for US-19
+
+---
+
+## Pass: 2026-11-14 — US-12 Start the app and watch the drone fly under PID control
+
+**Branch:** `feature/us12-live-app` (from `main` at `6069d65`; first of eight stacked branches)
+**Traces to:** `docs/design/DESIGN_f351eee.md` (US-12, OQ-34, OQ-36, OQ-41), `docs/architecture/ARCHITECTURE_899eaea.md` (LiveSession, real-time pacing predicate, App, Startup; D-16, D-17, D-18, D-22)
+**Approval basis:** as for US-19. **Mode:** as for US-19.
+
+**Files:**
+- New: `src/kuava_sim/live.py`, `src/kuava_sim/app.py`, `src/kuava_sim/__main__.py`.
+- Tests and test helpers: `tests/acceptance/test_us12_live_app.py`, `tests/acceptance/conftest.py` (the `tk_root` fixture skips with the reason when there is no display), `tests/acceptance/gui_helpers.py` (`FakeClock`, `pump`, `record_bytes`).
+
+**Red proof:** the tests were committed in `844f48f` before any code. 13 failed: `kuava_sim.live`, `kuava_sim.app` and `kuava_sim.__main__` did not exist. 2 scenarios were strict xfail, waiting for US-14 and US-16 (IQ-9 practice). `git diff 844f48f a01cdbf -- tests/` is empty.
+
+**Result:** 379 passed, 2 xfailed.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| The app starts with one command and the drone takes off under control | ✅ Pass | `test_start_command_opens_the_app_and_keeps_running` (real `python -m kuava_sim`, alive after 3 s, empty stderr), `test_app_starts_with_the_fixed_drone_on_the_ground_and_the_controller_on`, `test_altitude_rises_toward_the_setpoint_frame_by_frame`, `test_plotted_altitude_rises_toward_the_setpoint` (after US-14) |
+| The app runs in real time | ✅ Pass | `test_simulated_time_follows_the_wall_clock_in_whole_steps`, `test_no_steps_are_taken_when_no_time_has_passed` |
+| The app slows down instead of jumping ahead | ✅ Pass | `test_exactly_a_quarter_second_due_is_taken_in_full` (50), `test_more_than_a_quarter_second_due_takes_50_and_drops_the_rest` (51), `test_a_long_stall_never_causes_a_burst_of_catch_up_steps` |
+| The live simulation is the same deterministic simulation as without the GUI | ✅ Pass (after US-16) | `test_live_run_replays_bit_identically_without_the_gui` |
+| The app cannot start | ✅ Pass | `test_missing_tkinter_prints_one_plain_line_and_exits_with_1`, `test_no_display_prints_one_plain_line_and_exits_with_1`, `test_any_other_startup_error_prints_one_plain_line_and_exits_with_1`, `test_the_real_start_command_without_tkinter_exits_with_1_and_no_traceback`, `test_closing_the_window_normally_exits_with_0` |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| Real-time pacing | `due = int((now − anchor)·200) − steps since anchor`; never ahead of the wall clock; 50 steps at the limit, 51 → 50 and re-anchor | Pacing tests with a fake clock |
+| APP_CONFIG / SLIDERS | 1 kg, 9.81, drag 0.5, 30 N, from the ground at rest; controller on with 4 / 1 / 3 / 10 m | Start-state test |
+| Startup | One plain line on stderr, exit 1, no traceback; normal close exits 0 | Startup tests, including the real command in a subprocess |
+| D-17 | Everything in the Tk thread | `App` uses `root.after` only; no threads |
+
+### Open Questions Raised This Pass
+
+None.
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+None.
+
+### Coding Details Decided (rule 3)
+
+- `__main__` waits with `root.wait_window(root)` instead of `root.mainloop()`. It is the same Tk event loop, but it returns when this window is closed. `mainloop()` keeps running while any other Tk root in the process is open, which made the "normal close exits 0" test hang next to the test fixture's root.
+- `App` takes an optional `clock` and has a public `frame()` (one frame without rescheduling), so tests can drive it with a fake clock.
+- The window title is "Drone altitude — live PID simulation".
+
+### Version Control Actions
+
+- Branch: `feature/us12-live-app` (from `main` at `6069d65`)
+- Commits: `631ae7d` docs(approval) History move of the Round 3 architecture entry, `844f48f` test (red), `a01cdbf` feat(app)
+- PR: as for US-19
+
+---
+
 ## Pass: 2026-11-14 — US-11 Metrics agree with python-control
 
 **Branch:** `feature/us11-python-control-match` (stacked on `feature/us10-step-metrics`, IQ-10)
