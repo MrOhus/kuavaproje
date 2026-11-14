@@ -4,13 +4,44 @@
 
 ## Active Entry
 
-### Requirement Analysis — Round 2 PID altitude controller
+### Solution Architecture — Round 2 PID altitude controller
+
+- **Status**: Approved
+- **Stage**: Solution Architecture
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/architecture/ARCHITECTURE_3dbd8e9.md (linked from docs/architecture/ARCHITECTURE.md). Input: docs/design/DESIGN_0bfd04e.md (History entry "Requirement Analysis — Round 2 PID altitude controller", Approved 14.11.2026)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - Models: metric constants, controller state inside `Simulation`, `StepMetrics`, and the controlled-step predicate (integral first, `cmd = ((m*g + Kp*e) + I) - Kd*v`, bit-exact hover at the setpoint), each with types and units, invariants, boundary behavior and concurrency analysis.
+  - Decisions D-8 … D-15 (API placement, metrics implementation, step order, degenerate windows, 2 % rule for 0/NaN, reference model, lifecycle, record layout), decided by the operator through AQ-7 … AQ-14.
+  - The five items deferred by requirement analysis are covered by D-10, D-11, D-12, D-13 and D-14.
+  - Prototype (scratch): our metrics against python-control's continuous closed-loop model within 0.6 % for the US-11 example; all four tried tunings within 2 %.
+- **Open Questions Resolved This Session**:
+  - AQ-7 — Controller inside `Simulation` with enable/disable/set_gains/set_setpoint/step_metrics and a read-only status; state conflicts raise `RuntimeError` (option a) → D-8.
+  - AQ-8 — Pure-Python copy of `step_info`'s algorithm, no new runtime dependency (option a) → D-9.
+  - AQ-9 — Integral updated with the current error first, then the thrust computed (option a) → D-10.
+  - AQ-10 — Degenerate windows give NaN rise/overshoot/settling, steady-state values still reported, excluded from the same-signal check (option a) → D-11.
+  - AQ-11 — 2 % relative; reference 0 allows ±0.02 in the metric's unit; both NaN = match (option a) → D-12.
+  - AQ-12 — Continuous closed-loop python-control model on the same time points; tunings with rise time ≥ 0.25 s (option a) → D-13.
+  - AQ-13 — Turn on only while off (integral 0); turning on again or changing settings while off is an error; turning off keeps the last command (option a) → D-14.
+  - AQ-14 — Records keep six fields; setpoint changes in a separate list (option a) → D-15.
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Requirement Analysis — Round 2 PID altitude controller (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Requirement Analysis
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/design/DESIGN_0bfd04e.md (linked from docs/design/DESIGN.md)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #10 (`docs/round2-pid-controller-requirements`), merge commit `3dbd8e9` on `main`
 - **Decisions / Scope Covered**:
   - Round 2 scope: PID controller with Kp, Ki, Kd and setpoint changeable while running; rise time, overshoot (%), settling time and steady-state error after every setpoint change; match with python-control `step_info` within 2 %.
   - Out of scope: GUI, plots, wind/disturbances, pause and reset, anti-windup, sensor noise (wind, pause, reset and plots planned for Round 3 with the GUI).
@@ -27,13 +58,6 @@
   - OQ-33 — Gains ≥ 0, setpoint ≥ 0 m, no upper limit; a repeat setpoint does nothing; gain changes never start new metrics (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Implementation — US-4 Deterministic runs and US-5 Open-loop thrust input (Approved 14.11.2026)
 
