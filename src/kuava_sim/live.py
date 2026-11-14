@@ -5,6 +5,8 @@ wall-clock time from its caller, so tests can drive it with a fake clock.
 Single-threaded, like Simulation (D-17).
 """
 
+from collections import deque
+
 from .simulation import STEP_RATE_HZ, SimConfig, Simulation
 
 # Slider (low, high, start), resolution 0.1 (OQ-36).
@@ -21,12 +23,18 @@ APP_CONFIG = SimConfig(mass=1.0, gravity=9.81, drag_coeff=0.5, max_thrust=30.0)
 
 MAX_STEPS_PER_FRAME = 50  # 0.25 s; more than this is dropped (AQ-16)
 
+PLOT_WINDOW = 20.0  # s shown in the plots (OQ-38)
+PLOT_EVERY = 4  # steps per plotted point (20 ms)
+THRUST_Y_RANGE = (-1.0, 31.0)  # N, fixed thrust axis
+_PLOT_LEN = int(PLOT_WINDOW * STEP_RATE_HZ) // PLOT_EVERY + 1  # 1001 points
+
 
 class LiveSession:
     """One live run: the simulation plus everything the window shows."""
 
     def __init__(self, now: float):
         self.values = {name: start for name, (_, _, start) in SLIDERS.items()}
+        self._frame_times = deque()  # frame times within the last second
         self._start(now)
 
     def _start(self, now: float) -> None:
@@ -34,6 +42,10 @@ class LiveSession:
         v = self.values
         sim.enable_controller(kp=v["kp"], ki=v["ki"], kd=v["kd"], setpoint=v["setpoint"])
         self._sim = sim
+        first = sim.records[0]
+        self._plot = deque(
+            [(first.time, first.altitude, v["setpoint"], first.thrust_used)], maxlen=_PLOT_LEN
+        )
         self._anchor(now)
 
     def _anchor(self, now: float) -> None:
@@ -58,14 +70,40 @@ class LiveSession:
 
     def tick(self, now: float) -> int:
         """Take the steps due by the wall clock (pacing predicate); return how many."""
+        frames = self._frame_times
+        frames.append(now)
+        while frames[0] <= now - 1.0:
+            frames.popleft()
         sim = self._sim
         due = int((now - self._anchor_time) * STEP_RATE_HZ) - (
             sim.step_count - self._anchor_step
         )
         behind = due > MAX_STEPS_PER_FRAME
         n = MAX_STEPS_PER_FRAME if behind else max(due, 0)
+        setpoint = sim.controller.setpoint  # the setpoint used for these steps
+        plot = self._plot
         for _ in range(n):
-            sim.step()
+            record = sim.step()
+            if sim.step_count % PLOT_EVERY == 0:
+                plot.append((record.time, record.altitude, setpoint, record.thrust_used))
         if behind:  # drop the rest: carry on at real speed from now
             self._anchor(now)
         return n
+
+    def plot_points(self) -> tuple:
+        """(time s, altitude m, setpoint m, thrust used N), the last 20 s."""
+        return tuple(self._plot)
+
+    def plot_x_range(self) -> tuple:
+        """The time axis: [0, 20] s until 20 s have passed, then [t - 20, t]."""
+        t = self._sim.time
+        return (0.0, PLOT_WINDOW) if t <= PLOT_WINDOW else (t - PLOT_WINDOW, t)
+
+    def altitude_y_range(self) -> tuple:
+        """The altitude axis: 0 to 1.1 x the largest altitude or setpoint in view."""
+        top = max(max(p[1], p[2]) for p in self._plot)
+        return (0.0, max(1.0, 1.1 * top))
+
+    def fps(self, now: float) -> int:
+        """Frames in the last second."""
+        return sum(1 for t in self._frame_times if t > now - 1.0)

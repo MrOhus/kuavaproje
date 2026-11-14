@@ -91,7 +91,6 @@ def test_altitude_rises_toward_the_setpoint_frame_by_frame(tk_root):
     a.close()
 
 
-@pytest.mark.xfail(strict=True, reason="plot points arrive with US-14 (IQ-9 practice)")
 def test_plotted_altitude_rises_toward_the_setpoint():
     s = new_session(0.0)
     for frame in range(1, 33):
