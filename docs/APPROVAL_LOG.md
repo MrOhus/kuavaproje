@@ -4,7 +4,29 @@
 
 ## Active Entry
 
-_No active entry. The next pipeline stage (requirement analysis, Round 3) opens a new `Pending Approval` entry here._
+### Requirement Analysis — Round 3 live GUI, wind gust, pause and reset
+
+- **Status**: Approved
+- **Stage**: Requirement Analysis
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/design/DESIGN_f351eee.md (linked from docs/design/DESIGN.md)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - Round 3 scope: simple desktop GUI running the simulation live with the PID controller; sliders for Kp, Ki, Kd and the setpoint; live plots of setpoint, altitude and controller output above 30 fps; metrics after each setpoint change; wind gust button; pause and reset; README with setup and metric definitions; one start command and one test command; clear error messages instead of crashes.
+  - Out of scope: all bonus items, and everything out of scope in Rounds 1 and 2 unless named above.
+  - US-12 … US-19 written with full Gherkin ACs (happy and rejection paths); no BLOCKED scenarios remain.
+  - Deferred to solution-architect (listed in DESIGN_f351eee.md): GUI and plotting technology, how the GUI drives the simulation, the split of gust/pause/reset between core and GUI, when the app counts as behind (most steps per frame), how the frame rate is measured in tests, whether and how the gust appears in the records and the core API.
+- **Open Questions Resolved This Session**:
+  - OQ-34 — Real time; whole 200 Hz steps per frame; when behind, drop the missed time instead of jumping ahead (option a).
+  - OQ-35 — One gust button: 5 N downward for 0.5 s (100 steps); a press during a gust restarts it; part of the simulation core (option a).
+  - OQ-36 — Slider ranges Kp 0–50, Ki 0–20, Kd 0–20, setpoint 0–100 m, step 0.1, start 4/1/3/10 m; fixed drone 1 kg, drag 0.5, max 30 N, from the ground; controller always on; setpoint applies on release only (option a).
+  - OQ-37 — Pause/Resume button; sliders work while paused; gust disabled while paused; reset to time 0 keeps the slider values and the pause state (option a).
+  - OQ-38 — Two plots, last 20 s scrolling: altitude and setpoint; thrust actually used with 0 N and 30 N limits; all records kept, reset clears them (option a).
+  - OQ-39 — Metrics table, one row per setpoint change, newest on top, newest row live, NaN shown as "not reached" (option a).
+  - OQ-40 — Frame rate shown in the window; automated 5 s test on the average (> 30 fps); one slow frame does not fail it (option a).
+  - OQ-41 — Plain error messages in the window, simulation pauses, app stays open; startup problems one plain line, exit code 1; commands pip install -e ".[dev]", python -m kuava_sim, python -m pytest (option a).
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
 
 ---
 
