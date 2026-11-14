@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Requirement Analysis — Round 3 live GUI, wind gust, pause and reset
+_No active entry. The next pipeline stage (solution architecture, Round 3) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Requirement Analysis — Round 3 live GUI, wind gust, pause and reset (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Requirement Analysis
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/design/DESIGN_f351eee.md (linked from docs/design/DESIGN.md)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #17 (`docs/round3-gui-requirements`), merge commit `899eaea` on `main`
 - **Decisions / Scope Covered**:
   - Round 3 scope: simple desktop GUI running the simulation live with the PID controller; sliders for Kp, Ki, Kd and the setpoint; live plots of setpoint, altitude and controller output above 30 fps; metrics after each setpoint change; wind gust button; pause and reset; README with setup and metric definitions; one start command and one test command; clear error messages instead of crashes.
   - Out of scope: all bonus items, and everything out of scope in Rounds 1 and 2 unless named above.
@@ -27,12 +36,6 @@
   - OQ-41 — Plain error messages in the window, simulation pauses, app stays open; startup problems one plain line, exit code 1; commands pip install -e ".[dev]", python -m kuava_sim, python -m pytest (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Implementation — US-7 … US-11 PID controller and step-response metrics (Round 2) (Approved 14.11.2026)
 
