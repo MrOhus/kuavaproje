@@ -4,7 +4,27 @@
 
 ## Active Entry
 
-_No active entry. The next pipeline stage (implementation, Round 2) opens a new `Pending Approval` entry here._
+### Implementation — US-7 … US-11 PID controller and step-response metrics (Round 2)
+
+- **Status**: Approved
+- **Stage**: Implementation
+- **Session Started**: 2026-11-14
+- **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (five passes 2026-11-14, US-7 to US-11). Input: docs/design/DESIGN_0bfd04e.md (US-7 to US-11, approved 14.11.2026), docs/architecture/ARCHITECTURE_3dbd8e9.md (approved 14.11.2026)
+- **Requested By**: Human operator (Ohus)
+- **Decisions / Scope Covered**:
+  - US-7 controller on/off with `ControllerStatus`; manual thrust rejected while on (`99ff794` red, `8bb54cb` code).
+  - US-8 `set_gains` and `set_setpoint` (`23dacb6` red, `514a97a` code).
+  - US-9 closed-loop PID thrust step, integral first, bit-exact hover at the setpoint, no anti-windup (`22f29ed` red, `f6e77b2` code).
+  - US-10 `step_metrics()` with a pure-Python copy of python-control's `step_info` algorithm (`1c90dce` red, `5c5ded1` operator-approved test fix, `7b1acb5` code).
+  - US-11 comparison with python-control: same signal equal, closed-loop model within 2 % where it applies; no product code needed, 5 of 5 planted faults caught (`70450f0`).
+  - Red tests committed before code for every story; `git diff` of the tests between each red commit and its code commit is empty, except US-10 (the approved one-line format fix).
+  - Full suite: 366 passed, 0 xfailed. Branches stacked `feature/us7-pid-controller-on` to `feature/us11-python-control-match`. Done while the operator was away; signed by the operator afterwards.
+- **Open Questions Resolved This Session**:
+  - IQ-9 — Scenarios that need a later story stay in their own story as strict xfail; the marker is removed in the red commit of the completing story (option a).
+  - IQ-10 — Five stacked branches, one History move on the first, one shared Pending entry, all docs in one commit on the last branch (option a).
+  - IQ-11 — US-11 needs no product code: tests committed, falsifiability shown with planted faults (option a).
+- **Approved By**: Ohus
+- **Approval Date**: 14.11.2026
 
 ---
 

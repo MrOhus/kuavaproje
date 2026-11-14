@@ -4,6 +4,282 @@ Append one entry per implementation pass (one story per pass), **most recent fir
 
 ---
 
+## Pass: 2026-11-14 — US-11 Metrics agree with python-control
+
+**Branch:** `feature/us11-python-control-match` (stacked on `feature/us10-step-metrics`, IQ-10)
+**Traces to:** `docs/design/DESIGN_0bfd04e.md` (US-11, OQ-26 c, OQ-30), `docs/architecture/ARCHITECTURE_3dbd8e9.md` (D-9 equal results on the same signal, D-11, D-12 the 2 % rule, D-13 continuous closed-loop model; AQ-8, AQ-10, AQ-11, AQ-12)
+**Approval basis:** Requirement Analysis (Round 2) approved 14.11.2026; Solution Architecture (Round 2) approved 14.11.2026 (see `docs/APPROVAL_LOG.md`)
+**Mode:** done while the operator was away under the standing rules. Real decisions used the recommended option, marked awaiting operator confirmation; all were later confirmed (IQ-9 to IQ-11 "a").
+
+**Files:** `tests/acceptance/test_us11_python_control.py`, `tests/acceptance/pc_compare.py` (test-only helper: the D-12 rule and the python-control references). No production code changed.
+**Red proof:** no red phase was possible: the metrics from US-10 already satisfy US-11 (IQ-11). The tests were committed in `70450f0` before any production code. `git diff --stat 7b1acb5 HEAD -- src/` is empty. Five faults were planted in scratch copies (not committed), and the US-11 tests caught all five:
+
+| Planted fault | Caught by (failing tests) |
+|---|---|
+| Rise time measured from 15 % instead of 10 % | 9 |
+| Settling band 3 % instead of 2 % | 9 |
+| Overshoot 5 % too large | 9 |
+| Steady-state value from the second-to-last sample | 4 |
+| Controller drops the D term | 3 (model comparison) |
+
+**Result:** 366 passed, 0 xfailed (full suite). Python 3.15.2, pytest 9.2.0, python-control 0.10.2.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Metrics match step_info on the same signal | ✅ Pass | `test_metrics_match_step_info_on_the_same_signal` (up, down, lightly damped, saturated; values equal, not only within 2 %), `test_every_result_of_a_longer_run_matches_step_info` (5 results) |
+| Metrics match a python-control closed-loop model where the model applies | ✅ Pass | `test_metrics_match_the_closed_loop_model_where_it_applies` (3 cases; thrust strictly inside (0, 30) N, no ground contact, rise time ≥ 0.25 s asserted) |
+| The model comparison is not claimed where the model does not apply | ✅ Pass | `test_model_comparison_is_not_claimed_when_the_thrust_hits_a_limit`, `test_model_comparison_is_not_claimed_when_the_drone_touches_the_ground` |
+| A difference larger than 2 % fails the check | ✅ Pass | `test_the_two_percent_rule_at_its_limit` (+2 %, +2 % + one double, −2 %, −2 % − one double, equal), `test_a_zero_reference_allows_0_02_in_the_metric_unit`, `test_nan_matches_only_nan`, `test_a_failed_check_names_every_metric_that_differs` |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| D-9 | The metrics use `step_info`'s operations, so they equal its output on the same signal | Same-signal tests compare with `==` |
+| D-12 | 2 % relative; reference 0 allows ±0.02 in the metric's unit; both NaN match; one NaN mismatches | Rule tests at the limit and one double beyond |
+| D-13 | Continuous model `(Kp s + Ki)/(m s³ + (b+Kd) s² + Kp s + Ki)` on the same time points | Model tests; worst difference in the prototype 0.6 %, tests allow 2 % |
+
+### Open Questions Raised This Pass
+
+| ID | Question | Status | Resolution |
+|---|---|---|---|
+| IQ-11 | US-11 is already satisfied by the US-10 code, so its tests cannot fail first and there is no code to write. (a) **Recommended:** commit the tests, prove they can fail with planted faults, no code commit (as IQ-4); (b) commit the tests without that proof; (c) fold US-11 into the US-10 pass. | Resolved | "IQ-11 a" (confirmed by the operator after the pass) |
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- No red phase and no production code for US-11. Caused by IQ-11 (option a, confirmed by the operator).
+- The python-control comparison is only made for tunings with rise time ≥ 0.25 s, as ARCHITECTURE D-13 notes (one 5 ms sample is then at most 2 %). The US-11 example (rise time 1.07 s) is well inside.
+
+### Version Control Actions
+
+- Branch: `feature/us11-python-control-match` (from `feature/us10-step-metrics` at `7b1acb5`)
+- Commits: `70450f0` test(metrics): add US-11 python-control comparison acceptance tests (no code commit needed)
+- docs(implementation): log the Round 2 implementation passes (all five entries, the signed shared approval entry and LEARNING.md)
+- PR: opened against `main` and merged with a merge commit, in story order (US-7 first), after the operator signed
+
+---
+
+## Pass: 2026-11-14 — US-10 Step-response metrics after every setpoint change
+
+**Branch:** `feature/us10-step-metrics` (stacked on `feature/us9-closed-loop-thrust`, IQ-10)
+**Traces to:** `docs/design/DESIGN_0bfd04e.md` (US-10, OQ-29, OQ-30), `docs/architecture/ARCHITECTURE_3dbd8e9.md` (Entity: StepMetrics, constants; D-9, D-11; AQ-8, AQ-10)
+**Approval basis:** as for US-11.
+**Mode:** as for US-11.
+
+**Files:** `src/kuava_sim/simulation.py` (`StepMetrics`, `_step_info`, `step_metrics()`, `RISE_LIMITS`, `SETTLING_BAND`), `src/kuava_sim/__init__.py`, `tests/acceptance/test_us10_step_metrics.py`; the last two xfail markers (US-10) removed from the US-7, US-8 and US-9 tests, and the "strict xfail" notes in the US-7 and US-8 docstrings reworded to past tense (comment-only, in the red commit).
+**Red proof:** the tests and marker removals were committed in `1c90dce` before any production code (21 failed in the full suite, 14 new US-10 tests, all "no attribute 'step_metrics'"). The tests then changed once, in `5c5ded1` (see Deviations). `git diff --stat 5c5ded1 7b1acb5 -- tests/` is empty.
+**Result:** 345 passed, 0 xfailed.
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Each setpoint change gets its own metrics | ✅ Pass | `test_each_setpoint_change_gets_its_own_result_in_order`, `test_no_results_before_the_controller_is_ever_turned_on` |
+| A result covers the samples from its change to the next change | ✅ Pass | `test_a_result_covers_its_change_up_to_the_next_change` (records 0–100, 100–900, 900–1500) |
+| The latest result can be read at any time and is recomputed | ✅ Pass | `test_the_latest_result_is_recomputed_from_the_records_so_far`, `test_reading_the_metrics_changes_nothing` |
+| Metrics follow step_info's definitions on the relative altitude | ✅ Pass | `test_metrics_of_an_upward_step_follow_the_definitions` (each metric re-derived by scanning the recorded altitude) |
+| A downward step uses the same rules | ✅ Pass | `test_metrics_of_a_downward_step_follow_the_same_definitions` |
+| A metric that is never reached is reported as NaN | ✅ Pass | `test_a_zero_size_step_gives_nan_metrics`, `test_a_single_sample_window_gives_nan_metrics`, `test_a_change_with_a_tiny_but_non_zero_final_change_is_measured` (D-11) |
+| Metrics are reported in fixed units | ✅ Pass | `test_metrics_fields_and_types` |
+| Rejected setpoint changes create no metrics | ✅ Pass | `test_rejected_setpoint_change_creates_no_metrics` (negative, NaN, str) after the fix below |
+
+**Earlier scenarios now complete** (markers removed in `1c90dce`): US-7 "Turning on counts as the first setpoint change"; US-8 "The setpoint can be changed" (new result at that record), "A gain change does not start a new result", "Setting the same setpoint again does nothing" (no new result); US-9 "Closed-loop runs are deterministic" (identical metrics).
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| `StepMetrics` | One result per entry in `_changes`, in order; window records `k … next change`, last window to the latest record; times are `(i − k)/200` | Window and order tests |
+| `StepMetrics` | `steady_state_error == setpoint − final altitude`; `steady_state_value == final − start altitude` | `check_definitions` in the definition tests |
+| D-11 | A window of 1 record or a final change of exactly 0 gives NaN rise, overshoot and settling time; steady-state values still reported | Degenerate-window tests |
+| Reading | `step_metrics()` recomputes from the live records and changes nothing | Recompute and no-side-effect tests |
+
+### Open Questions Raised This Pass
+
+None new (IQ-9 and IQ-10 apply; see the US-7 pass).
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- **Test typo fixed after the red commit (operator-approved).** What it was: `test_rejected_setpoint_change_creates_no_metrics` built its comparison with `struct.pack("<9d", *r[1:4], *r[5:])`, which packs 3 + 5 = 8 values, so the format `"<9d"` was wrong (it should be `"<8d"`) and the test raised `struct.error` before comparing anything. Why the red phase did not catch it: in the red phase `step_metrics()` did not exist yet, so the test failed earlier, with `AttributeError: 'Simulation' object has no attribute 'step_metrics'`, before reaching the `struct.pack` line. It only showed in the green run (3 failures, one per parametrized case), so no production code was involved. Why the fix does not weaken the test: only the format string changed (`"<9d"` to `"<8d"` in two places); the same 8 fields of every result are still compared byte for byte, before and after the rejected change, and the count of results is still asserted to be 2. Checked in a scratch copy first (345 passed) and committed alone as `5c5ded1`, labelled test-fix, with the operator's approval. Note for honesty: this comparison covers 8 of the 10 fields; `change_index` and `samples` are not in it, both before and after the fix. The tuple equality in `test_reading_the_metrics_changes_nothing` covers all fields.
+
+### Version Control Actions
+
+- Branch: `feature/us10-step-metrics` (from `feature/us9-closed-loop-thrust` at `f6e77b2`)
+- Commits:
+  - `1c90dce` test(metrics): add failing US-10 step-response metrics acceptance tests (red, before code)
+  - `5c5ded1` test(metrics): fix struct format in US-10 rejected-change test (test-fix, operator-approved)
+  - `7b1acb5` feat(metrics): add step-response metrics after every setpoint change
+- PR: opened against `main` and merged with a merge commit, in story order (US-7 first), after the operator signed
+
+---
+
+## Pass: 2026-11-14 — US-9 Closed-loop thrust every step
+
+**Branch:** `feature/us9-closed-loop-thrust` (stacked on `feature/us8-change-gains-setpoint`, IQ-10)
+**Traces to:** `docs/design/DESIGN_0bfd04e.md` (US-9, OQ-27, OQ-28), `docs/architecture/ARCHITECTURE_3dbd8e9.md` (Predicate: Controlled step; D-10; AQ-9)
+**Approval basis:** as for US-11.
+**Mode:** as for US-11.
+
+**Files:** `src/kuava_sim/simulation.py` (`_control()`, used by `step()` and `run()`), `tests/acceptance/test_us9_closed_loop.py`; the five US-9 xfail markers removed from the US-7 and US-8 tests.
+**Red proof:** the tests and marker removals were committed in `22f29ed` before any production code (16 failed, 0 of the new US-9 tests passing; one test that first passed against the uncontrolled code, `test_run_n_under_control_equals_n_single_steps`, was strengthened before the red commit to also require that the drone climbs). `git diff --stat 22f29ed f6e77b2 -- tests/` is empty.
+**Result:** 324 passed, 7 xfailed (strict: the 7 waiting for US-10).
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Thrust follows the controller formula | ✅ Pass | `test_thrust_follows_the_controller_formula` (16.31 N), `test_integral_is_updated_with_the_current_error_before_it_is_used` (9.83 N), `test_every_step_follows_the_formula_from_the_exact_state_at_its_start` (600 steps) |
+| Holding at the setpoint uses exactly the hover thrust | ✅ Pass | `test_holding_at_the_setpoint_uses_the_hover_thrust` (every step within ε), `test_holding_at_the_setpoint_is_bit_exact` |
+| A setpoint change gives no derivative spike | ✅ Pass | `test_a_setpoint_change_gives_no_derivative_spike` (thrust used exactly m·g) |
+| The controller's thrust is capped silently at the maximum | ✅ Pass | `test_controller_thrust_is_capped_silently_at_the_maximum` (no warnings; held command above the limit) |
+| The controller cannot ask for negative thrust | ✅ Pass | `test_controller_cannot_ask_for_negative_thrust` |
+| No anti-windup in Round 2 | ✅ Pass | `test_no_anti_windup_the_integral_keeps_growing_at_the_limit` (400 capped steps; integral equals the running sum) |
+| Closed-loop runs are deterministic | ⚠️ Partial, then ✅ | Records: `test_closed_loop_runs_give_identical_records`, `test_run_n_under_control_equals_n_single_steps`; metrics test completed in US-10 |
+| The controller sees the exact simulated altitude | ✅ Pass | `test_every_step_follows_the_formula_from_the_exact_state_at_its_start` |
+
+**Earlier scenarios now complete:** US-7 "Taking off from the ground under control" and "Turning the controller off returns Round 1 behaviour" (held thrust); US-8 "Gains can be changed" (new gain used next step), "The setpoint can be changed" (works toward the new setpoint), "Changing Ki affects only the future".
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| Controlled step (D-10) | `e = setpoint − h`; `I = I + (Ki·e)·dt`; `cmd = ((m·g + Kp·e) + I) − Kd·v`; then the unchanged Round 1 step caps it | Formula tests, bit-exact hover |
+| No anti-windup | `I` is never clamped or reset while on | Capped-run test |
+| Determinism | Same settings and change sequence give identical records | Two 10000-step runs with gain and setpoint changes compared byte for byte; the run really varies the thrust (over 1000 distinct values) |
+| `run(n)` | Under control equals `n` single steps | `test_run_n_under_control_equals_n_single_steps` |
+
+### Open Questions Raised This Pass
+
+None new (IQ-9 and IQ-10 apply; see the US-7 pass).
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- The metrics part of "Closed-loop runs are deterministic" was a strict xfail until US-10 (IQ-9, confirmed by the operator).
+
+### Version Control Actions
+
+- Branch: `feature/us9-closed-loop-thrust` (from `feature/us8-change-gains-setpoint` at `514a97a`)
+- Commits:
+  - `22f29ed` test(controller): add failing US-9 closed-loop thrust acceptance tests (red, before code; removes 5 xfail markers)
+  - `f6e77b2` feat(controller): add the closed-loop PID thrust step
+- PR: opened against `main` and merged with a merge commit, in story order (US-7 first), after the operator signed
+
+---
+
+## Pass: 2026-11-14 — US-8 Change the gains and the setpoint while the simulation runs
+
+**Branch:** `feature/us8-change-gains-setpoint` (stacked on `feature/us7-pid-controller-on`, IQ-10)
+**Traces to:** `docs/design/DESIGN_0bfd04e.md` (US-8, OQ-28, OQ-33), `docs/architecture/ARCHITECTURE_3dbd8e9.md` (Entity: Controller state; D-8, D-14; AQ-7, AQ-13)
+**Approval basis:** as for US-11.
+**Mode:** as for US-11.
+
+**Files:** `src/kuava_sim/simulation.py` (`set_gains`, `set_setpoint`), `tests/acceptance/test_us8_change_settings.py`.
+**Red proof:** the tests were committed in `23dacb6` before any production code (20 failed, 0 passed, 8 strict xfail; all failures "no attribute 'set_gains'" or "'set_setpoint'"). `git diff --stat 23dacb6 514a97a -- tests/` is empty.
+**Result:** 308 passed, 11 xfailed (strict: 3 from US-7, 8 from this story, waiting for US-9 and US-10).
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Gains can be changed between steps | ⚠️ Partial, then ✅ | `test_gains_can_be_changed_and_are_reported_back`, `test_gain_change_leaves_earlier_records_unchanged`; `test_new_gain_is_used_from_the_next_step` completed in US-9 |
+| The setpoint can be changed between steps | ⚠️ Partial, then ✅ | `test_setpoint_can_be_changed_and_is_reported_back`; the "works toward the new setpoint" and "new result at that record" tests completed in US-9 and US-10 |
+| Changing Ki affects only the future | ⚠️ Partial, then ✅ | `test_changing_ki_keeps_the_integral_and_stops_its_growth`, completed in US-9 |
+| A gain change does not start a new metrics result | ⚠️ Partial, then ✅ | `test_a_gain_change_does_not_start_a_new_metrics_result` (kp, ki, kd), completed in US-10 |
+| Setting the same setpoint again does nothing | ✅ Pass | `test_setting_the_same_setpoint_again_changes_nothing`; the no-new-result part completed in US-10 |
+| An invalid change is rejected and nothing changes | ✅ Pass | `test_invalid_gain_change_is_rejected_and_nothing_changes` (NaN, −0.5, +Inf, next double below 0, bool, str), `test_partly_invalid_gain_change_applies_nothing`, `test_invalid_setpoint_change_is_rejected_and_nothing_changes`, `test_setpoint_zero_is_accepted`, `test_set_gains_without_any_gain_is_rejected` |
+| Changes take effect from the next step | ✅ Pass | Covered by `test_new_gain_is_used_from_the_next_step` (US-9 pass) and the settings-read-once design |
+| Settings cannot be changed while the controller is off (D-14) | ✅ Pass | `test_settings_cannot_be_changed_while_the_controller_is_off` |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| `set_gains`, `set_setpoint` | All given values are checked before anything changes; errors name the setting; apply from the next step | Rejection and partly-invalid tests |
+| `_changes` | A different setpoint adds one change; the same setpoint again and gain changes add none | Same-setpoint and gain-change tests |
+| D-14 | `RuntimeError` naming "the controller is off" while off | Off-state test |
+
+### Open Questions Raised This Pass
+
+None new (IQ-9 and IQ-10 apply; see the US-7 pass).
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- Five scenarios were strict xfail until US-9 and US-10 landed (IQ-9, confirmed by the operator).
+
+### Version Control Actions
+
+- Branch: `feature/us8-change-gains-setpoint` (from `feature/us7-pid-controller-on` at `8bb54cb`)
+- Commits:
+  - `23dacb6` test(controller): add failing US-8 gain and setpoint change acceptance tests (red, before code)
+  - `514a97a` feat(controller): add set_gains and set_setpoint
+- PR: opened against `main` and merged with a merge commit, in story order (US-7 first), after the operator signed
+
+---
+
+## Pass: 2026-11-14 — US-7 Turn on a PID altitude controller
+
+**Branch:** `feature/us7-pid-controller-on`
+**Traces to:** `docs/design/DESIGN_0bfd04e.md` (US-7, OQ-31, OQ-32, OQ-33), `docs/architecture/ARCHITECTURE_3dbd8e9.md` (Entity: Controller state; D-8, D-14; AQ-7, AQ-13)
+**Approval basis:** as for US-11.
+**Mode:** as for US-11.
+
+**Files:** `src/kuava_sim/simulation.py` (`ControllerStatus`, `enable_controller`, `disable_controller`, `controller`, manual-thrust rejection), `src/kuava_sim/__init__.py`, `tests/acceptance/test_us7_controller_on.py`.
+**Red proof:** the tests were committed in `99ff794` before any production code (60 failed, 0 passed, 3 strict xfail; all failures "no attribute 'controller'" or "'enable_controller'"). `git diff --stat 99ff794 8bb54cb -- tests/` is empty.
+**Result:** 288 passed, 3 xfailed (strict, waiting for US-9 and US-10).
+
+### Acceptance Criteria Coverage
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Valid gains and setpoint are accepted | ✅ Pass | `test_valid_gains_and_setpoint_are_accepted_and_reported_back`, `test_controller_is_off_with_no_settings_before_it_is_turned_on`, `test_turning_on_does_not_step_or_change_records` |
+| Gains and setpoint at their lower limit are accepted | ✅ Pass | `test_zero_is_accepted_for_each_setting`, `test_smallest_positive_value_is_accepted_for_each_setting` |
+| Negative gains or a setpoint below the ground are rejected | ✅ Pass | `test_negative_value_is_rejected_with_clear_error` (−0.001, −1, next double below 0; message names the setting and "must not be below 0") |
+| Non-finite gains or setpoint are rejected | ✅ Pass | `test_non_finite_value_is_rejected_with_clear_error`, `test_non_number_value_is_rejected_with_clear_error` |
+| Turning on without a setpoint is rejected | ✅ Pass | `test_turning_on_without_a_setting_is_rejected` (each of the four) |
+| Large setpoints are accepted | ✅ Pass | `test_large_setpoint_is_accepted` |
+| Turning on counts as the first setpoint change | ⚠️ Partial, then ✅ | `test_turning_on_counts_as_the_first_setpoint_change`, completed in US-10 |
+| Taking off from the ground under control | ⚠️ Partial, then ✅ | `test_taking_off_from_the_ground_under_control`, completed in US-9 |
+| Manual thrust is rejected while the controller is on | ✅ Pass | `test_manual_thrust_is_rejected_while_the_controller_is_on` (`step`, `run`, `run(0)`, NaN; `RuntimeError`, nothing changes) |
+| Turning the controller off returns Round 1 behaviour | ⚠️ Partial, then ✅ | `test_turning_off_accepts_manual_commands_again`; `test_turning_off_keeps_the_last_controller_command_as_held_thrust` completed in US-9 |
+| D-14 lifecycle | ✅ Pass | `test_turning_on_while_on_is_rejected`, `test_turning_off_while_off_does_nothing`, `test_controller_can_be_turned_on_again_after_off` |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| Controller state | Gains and setpoint finite and ≥ 0, all four checked before any change; settings `NaN` while off; integral reset to 0 on turning on | Limit tests (0, smallest positive, next double below 0), status tests |
+| `_changes` | Turning on adds the first setpoint change | US-7 and US-10 tests |
+| OQ-31 | Manual thrust rejected while on, with all state unchanged | Manual-thrust test |
+| Concurrency | Not thread-safe, no locking (as Round 1) | Inspection |
+
+### Open Questions Raised This Pass
+
+All used the recommended option while the operator was away; the operator later confirmed all three. IQ-9 to IQ-11 cover the whole of Round 2.
+
+| ID | Question | Status | Resolution |
+|---|---|---|---|
+| IQ-9 | Several Round 2 scenarios need a later story's code (the controlled step is US-9, metrics are US-10). (a) **Recommended:** keep each scenario in its own story as a strict xfail (as IQ-1 and IQ-2) and remove the marker in the red commit of the story that completes it, so it joins the red set; (b) implement the controlled step and metrics inside US-7, which makes the US-9 and US-10 red phases meaningless; (c) reorder the stories. | Resolved | "IQ-9 a" (confirmed by the operator after the pass) |
+| IQ-10 | Nothing can be signed while the operator is away, so the usual History move and docs commit cannot be done per story. (a) **Recommended:** as IQ-8: stack the five branches (US-7 from `main`, each next one from the previous), do the History move once as the first commit on the US-7 branch, keep one shared Pending entry for US-7 to US-11, and commit all five log entries and the signed entry in one docs commit on the last branch; (b) five independent branches from `main` with five Pending entries; (c) wait for the operator. | Resolved | "IQ-10 a" (confirmed by the operator after the pass) |
+| IQ-11 | See the US-11 pass (no red phase and no code for US-11). | Resolved | "IQ-11 a" (confirmed by the operator after the pass) |
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- Three scenarios were strict xfail until US-9 and US-10 landed. Caused by IQ-9 (option a, confirmed by the operator).
+- Process: stacked branches and one shared Pending entry for US-7 to US-11. Caused by IQ-10 (option a, confirmed by the operator).
+
+### Version Control Actions
+
+- Branch: `feature/us7-pid-controller-on` (from `main` at `9e9653b`)
+- Commits:
+  - `e7cd1fb` docs(approval): move round 2 architecture approval to history
+  - `99ff794` test(controller): add failing US-7 controller on/off acceptance tests (red, before code)
+  - `8bb54cb` feat(controller): add PID controller on/off and its status
+- PR: opened against `main` and merged with a merge commit, in story order (US-7 first), after the operator signed
+
+---
+
 ## Pass: 2026-11-14 — US-5 Open-loop thrust input (no controller)
 
 **Branch:** `feature/us5-open-loop-thrust` (from `feature/us4-deterministic-runs`, see IQ-8)
