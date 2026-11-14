@@ -126,10 +126,16 @@ class App:
     def _build_status(self) -> None:
         status = tk.Frame(self.root)
         status.pack(side=tk.BOTTOM, fill=tk.X, padx=8, pady=4)
+        self.gust_button = tk.Button(status, text="Wind gust", width=10,
+                                     command=self._on_gust)
+        self.gust_button.pack(side=tk.RIGHT, padx=4)
         self.fps_label = tk.Label(status, text="0 fps", width=8, anchor="w")
         self.fps_label.pack(side=tk.LEFT)
 
     # --- input ----------------------------------------------------------------
+
+    def _on_gust(self) -> None:
+        self.session.press_gust()
 
     def _on_setpoint_release(self, event=None) -> None:
         self.session.release_setpoint(self.sliders["setpoint"].get())

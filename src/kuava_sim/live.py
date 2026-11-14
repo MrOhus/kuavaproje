@@ -99,6 +99,10 @@ class LiveSession:
             self._rows.append(finished)
             self._newest = sim.last_step_metrics()
 
+    def press_gust(self) -> None:
+        """The gust button: a 5 N downward push for 0.5 s from the next step."""
+        self._sim.gust()
+
     def tick(self, now: float) -> int:
         """Take the steps due by the wall clock (pacing predicate); return how many."""
         frames = self._frame_times
