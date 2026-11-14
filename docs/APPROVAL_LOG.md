@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Implementation — Fix: gain sliders while the window is not drawn (US-13)
+_No active entry. Rounds 1 to 3 and the gain-slider fix have all landed on `main`; the next pipeline stage opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Implementation — Fix: gain sliders while the window is not drawn (US-13) (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Implementation
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/implementation/IMPLEMENTATION_LOG.md (pass "Fix: gain sliders while the window is not drawn"). Input: docs/design/DESIGN_f351eee.md US-13 (approved 14.11.2026), docs/architecture/ARCHITECTURE_899eaea.md (approved 14.11.2026)
 - **Requested By**: Human operator (Ohus), after the pre-submission check
+- **Landed In**: PR #27 (`bugfix/gain-slider-redraw`), merge commit `6510d65` on `main`
 - **Decisions / Scope Covered**:
   - Gain sliders apply from the next step even when the window is not drawn; they use a Tk variable with a write trace instead of the Scale command (`362a81d` red, `9cb5cdb` fix).
   - Window tests that need mouse or key events skip with the reason shown when the window is not visible, as AQ-21 (`cc72708`, operator-approved test change; six tests, see the log).
@@ -19,12 +28,6 @@
 - **Open Questions Resolved This Session**: none raised
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Implementation — US-12 … US-19 live GUI, wind gust, pause and reset (Round 3) (Approved 14.11.2026)
 
