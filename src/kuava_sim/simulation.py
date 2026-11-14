@@ -81,12 +81,14 @@ class Simulation:
         self._config = config
         self._held_thrust = 0.0  # N, last accepted thrust command
         self._step_count = 0
+        self._altitude = config.initial_altitude  # m
+        self._velocity = config.initial_velocity  # m/s
 
     def step(self, thrust=None) -> None:
         """Advance one fixed step. A given thrust becomes the held command."""
         if thrust is not None:
-            self._held_thrust = thrust
-        self._step_count += 1
+            self._held_thrust = _finite_float("thrust", thrust)
+        self._advance()
 
     def run(self, n: int, thrust=None) -> None:
         """Do exactly what n calls to step() would do; run(0) changes nothing."""
@@ -94,11 +96,31 @@ class Simulation:
             raise TypeError(f"n must be a whole number of steps (got {n!r})")
         if n < 0:
             raise ValueError(f"n must not be negative (got {n})")
+        if thrust is not None:
+            thrust = _finite_float("thrust", thrust)
         if n == 0:
             return
-        self.step(thrust)
-        for _ in range(n - 1):
-            self.step()
+        if thrust is not None:
+            self._held_thrust = thrust
+        for _ in range(n):
+            self._advance()
+
+    def _advance(self) -> None:
+        """One fixed step, exactly as ARCHITECTURE.md D-3 and D-4 specify."""
+        cfg = self._config
+        m = cfg.mass
+        v = self._velocity
+        t_used = min(max(self._held_thrust, MIN_THRUST), cfg.max_thrust)
+        drag = -(cfg.drag_coeff * v)
+        a = ((t_used - m * cfg.gravity) + drag) / m
+        v_next = v + a * DT
+        h_next = self._altitude + v_next * DT
+        if h_next <= 0.0 and v_next < 0.0:  # floor (D-4)
+            h_next = 0.0
+            v_next = 0.0
+        self._altitude = h_next
+        self._velocity = v_next
+        self._step_count += 1
 
     @property
     def config(self) -> SimConfig:
@@ -119,13 +141,13 @@ class Simulation:
 
     @property
     def altitude(self) -> float:
-        """Altitude in m. Dynamics arrive with US-3 (IQ-2)."""
-        return self._config.initial_altitude
+        """Altitude in m, never below 0."""
+        return self._altitude
 
     @property
     def velocity(self) -> float:
-        """Vertical velocity in m/s, positive upward. Dynamics arrive with US-3 (IQ-2)."""
-        return self._config.initial_velocity
+        """Vertical velocity in m/s, positive upward."""
+        return self._velocity
 
     @property
     def step_rate_hz(self) -> int:
