@@ -30,6 +30,49 @@ class Record(NamedTuple):
 _WIDTH = len(Record._fields)  # doubles per record
 
 
+RISE_LIMITS = (0.1, 0.9)  # fractions of the final value (step_info default)
+SETTLING_BAND = 0.02  # fraction of the final value (step_info default)
+
+
+class StepMetrics(NamedTuple):
+    """Step-response metrics for one setpoint change (SI units, % for overshoot)."""
+
+    change_index: int  # record at which the setpoint changed
+    change_time: float  # s
+    start_altitude: float  # m
+    setpoint: float  # m
+    samples: int  # records in the window
+    rise_time: float  # s, or NaN
+    overshoot: float  # %, or NaN
+    settling_time: float  # s, or NaN
+    steady_state_value: float  # m, final altitude minus start altitude
+    steady_state_error: float  # m, setpoint minus final altitude
+
+
+def _step_info(y, times):
+    """Rise time, overshoot and settling time, as python-control 0.10 step_info.
+
+    Same operations in the same order (ARCHITECTURE_3dbd8e9.md D-9), with the
+    final value taken from the last sample. A window with one sample or a final
+    change of exactly 0 has nothing to measure and gives NaN (D-11).
+    """
+    final = y[-1]
+    if len(y) < 2 or final == 0.0:
+        return math.nan, math.nan, math.nan
+    sign = 1.0 if final > 0.0 else -1.0
+    low = next(i for i, yi in enumerate(y) if sign * (yi - RISE_LIMITS[0] * final) >= 0)
+    high = next(i for i, yi in enumerate(y) if sign * (yi - RISE_LIMITS[1] * final) >= 0)
+    rise_time = times[high] - times[low]
+    settled = 0
+    for i, yi in enumerate(y):
+        if abs(yi / final - 1) >= SETTLING_BAND:
+            settled = i + 1
+    settling_time = times[settled] if settled < len(times) else math.nan
+    beyond = abs(max(sign * yi for yi in y)) - abs(final)
+    overshoot = abs(100.0 * beyond / final) if beyond > 0 else 0.0
+    return rise_time, overshoot, settling_time
+
+
 class ControllerStatus(NamedTuple):
     """Read-only snapshot of the PID controller (NaN settings while off)."""
 
@@ -201,6 +244,25 @@ class Simulation:
             return
         self._setpoint = setpoint
         self._changes.append((self.step_count, setpoint))
+
+    def step_metrics(self) -> tuple:
+        """One StepMetrics per setpoint change, recomputed from the records so far."""
+        altitude = self._records.column("altitude")
+        last = len(altitude) - 1
+        results = []
+        for j, (k, setpoint) in enumerate(self._changes):
+            end = self._changes[j + 1][0] if j + 1 < len(self._changes) else last
+            h = altitude[k : end + 1]
+            y = [hi - h[0] for hi in h]
+            times = [i / STEP_RATE_HZ for i in range(len(y))]
+            rise_time, overshoot, settling_time = _step_info(y, times)
+            results.append(
+                StepMetrics(
+                    k, k / STEP_RATE_HZ, h[0], setpoint, len(y),
+                    rise_time, overshoot, settling_time, y[-1], setpoint - h[-1],
+                )
+            )
+        return tuple(results)
 
     @property
     def controller(self) -> ControllerStatus:
