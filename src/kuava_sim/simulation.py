@@ -5,12 +5,54 @@ Not thread-safe: drive one Simulation instance from a single thread.
 """
 
 import math
+from array import array
+from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import NamedTuple
 
 STEP_RATE_HZ: int = 200
 DT: float = 1 / STEP_RATE_HZ  # s
 MIN_THRUST: float = 0.0  # N
 DEFAULT_GRAVITY: float = 9.81  # m/s²
+
+
+class Record(NamedTuple):
+    """The state at one moment (SI units, positive upward)."""
+
+    time: float  # s
+    altitude: float  # m
+    velocity: float  # m/s
+    acceleration: float  # m/s²
+    thrust_used: float  # N
+    drag: float  # N
+
+
+_WIDTH = len(Record._fields)  # doubles per record
+
+
+class RecordLog(Sequence):
+    """Read-only view of the records, stored as one flat array('d')."""
+
+    def __init__(self, data: array):
+        self._data = data
+
+    def __len__(self) -> int:
+        return len(self._data) // _WIDTH
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            return [self[i] for i in range(*index.indices(len(self)))]
+        n = len(self)
+        if index < 0:
+            index += n
+        if not 0 <= index < n:
+            raise IndexError("record index out of range")
+        start = index * _WIDTH
+        return Record(*self._data[start : start + _WIDTH])
+
+    def column(self, name: str) -> tuple:
+        """One field of every record, in time order."""
+        return tuple(self._data[Record._fields.index(name) :: _WIDTH])
 
 
 def _finite_float(name, value):
@@ -75,20 +117,37 @@ class SimConfig:
 
 
 class Simulation:
-    """One simulated drone. Created from a valid SimConfig."""
+    """One simulated drone. Created from a valid SimConfig.
+
+    The records are the single source of truth: time, altitude and velocity
+    are read from the last record.
+    """
 
     def __init__(self, config: SimConfig):
         self._config = config
         self._held_thrust = 0.0  # N, last accepted thrust command
-        self._step_count = 0
-        self._altitude = config.initial_altitude  # m
-        self._velocity = config.initial_velocity  # m/s
+        self._data = array("d")
+        self._records = RecordLog(self._data)
+        self._data.extend(self._first_record())
 
-    def step(self, thrust=None) -> None:
-        """Advance one fixed step. A given thrust becomes the held command."""
+    def _first_record(self) -> tuple:
+        """Time-0 record (DESIGN.md I-3)."""
+        cfg = self._config
+        h0, v0 = cfg.initial_altitude, cfg.initial_velocity
+        if h0 == 0.0 and v0 == 0.0:  # on the ground at rest
+            return (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        drag = -(cfg.drag_coeff * v0)
+        a = ((0.0 - cfg.mass * cfg.gravity) + drag) / cfg.mass
+        return (0.0, h0, v0, a, 0.0, drag)
+
+    def step(self, thrust=None) -> Record:
+        """Advance one fixed step and return its record.
+
+        A given thrust becomes the held command.
+        """
         if thrust is not None:
             self._held_thrust = _finite_float("thrust", thrust)
-        self._advance()
+        return Record(*self._advance())
 
     def run(self, n: int, thrust=None) -> None:
         """Do exactly what n calls to step() would do; run(0) changes nothing."""
@@ -105,26 +164,37 @@ class Simulation:
         for _ in range(n):
             self._advance()
 
-    def _advance(self) -> None:
-        """One fixed step, exactly as ARCHITECTURE.md D-3 and D-4 specify."""
+    def _advance(self) -> tuple:
+        """One fixed step, exactly as ARCHITECTURE.md D-3 and D-4 specify.
+
+        The record is appended in one call, so a step adds all six values
+        or none.
+        """
         cfg = self._config
+        data = self._data
         m = cfg.mass
-        v = self._velocity
+        h, v = data[-5], data[-4]
         t_used = min(max(self._held_thrust, MIN_THRUST), cfg.max_thrust)
         drag = -(cfg.drag_coeff * v)
         a = ((t_used - m * cfg.gravity) + drag) / m
         v_next = v + a * DT
-        h_next = self._altitude + v_next * DT
-        if h_next <= 0.0 and v_next < 0.0:  # floor (D-4)
-            h_next = 0.0
-            v_next = 0.0
-        self._altitude = h_next
-        self._velocity = v_next
-        self._step_count += 1
+        h_next = h + v_next * DT
+        t = (len(data) // _WIDTH) / STEP_RATE_HZ  # new step count / 200
+        if h_next <= 0.0 and v_next < 0.0:  # floor (D-4), I-2
+            record = (t, 0.0, 0.0, 0.0, t_used, 0.0)
+        else:
+            record = (t, h_next, v_next, a, t_used, drag)
+        data.extend(record)
+        return record
 
     @property
     def config(self) -> SimConfig:
         return self._config
+
+    @property
+    def records(self) -> RecordLog:
+        """All records so far, read-only, in time order."""
+        return self._records
 
     @property
     def held_thrust(self) -> float:
@@ -132,22 +202,22 @@ class Simulation:
 
     @property
     def step_count(self) -> int:
-        return self._step_count
+        return len(self._data) // _WIDTH - 1
 
     @property
     def time(self) -> float:
-        """Simulated time in s, from the step count so it cannot drift."""
-        return self._step_count / STEP_RATE_HZ
+        """Simulated time in s (step count / 200, so it cannot drift)."""
+        return self._data[-6]
 
     @property
     def altitude(self) -> float:
         """Altitude in m, never below 0."""
-        return self._altitude
+        return self._data[-5]
 
     @property
     def velocity(self) -> float:
         """Vertical velocity in m/s, positive upward."""
-        return self._velocity
+        return self._data[-4]
 
     @property
     def step_rate_hz(self) -> int:

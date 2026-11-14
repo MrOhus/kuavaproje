@@ -4,6 +4,75 @@ Append one entry per implementation pass (one story per pass), **most recent fir
 
 ---
 
+## Pass: 2026-11-14 — US-6 Output records
+
+**Branch:** `feature/us6-output-records`
+**Traces to:** `docs/design/DESIGN.md` (US-6, I-1, I-2, I-3), `docs/architecture/ARCHITECTURE.md` (Entity: Record, Entity: RecordLog, Entity: Simulation — records as the single source of truth, `step()` returns the Record; decision D-5 record storage)
+**Approval basis:** Requirement Analysis entry approved 13.11.2026; Solution Architecture entry approved 14.11.2026 (see `docs/APPROVAL_LOG.md`)
+
+**Files:** `src/kuava_sim/simulation.py`, `src/kuava_sim/__init__.py`, `tests/acceptance/test_us6_records.py`; the strict xfail markers were removed from `test_us1_config.py`, `test_us2_fixed_steps.py` and `test_us3_dynamics.py`.
+**Red proof:** the tests and marker removals were committed in `cccecfd` before any production code (38 failed: 26 new US-6 tests and the 12 former xfails, all with "no attribute 'records'"; 0 US-6 tests passed). `git diff cccecfd -- tests/` is empty after green.
+**Result:** 180 passed, 0 xfailed. Python 3.15.2, pytest 9.2.0. As the operator asked, no planted-bug check was run.
+
+### Acceptance Criteria Coverage
+
+All US-6 tests are in `tests/acceptance/test_us6_records.py`.
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| The starting moment is the first record | ✅ Pass | `test_starting_moment_is_the_first_record`, plus the I-3 edge cases `test_starting_record_off_the_ground_at_rest_shows_gravity` and `test_starting_record_on_the_ground_moving_up_shows_forces` |
+| Starting record on the ground at rest | ✅ Pass | `test_starting_record_on_the_ground_at_rest_is_all_zero` (v0 0.0 and −0.0; bytes equal to six +0.0) |
+| One record is added after every step | ✅ Pass | `test_one_record_is_added_after_every_step` (251 records, time i/200, strictly increasing), `test_each_single_step_adds_exactly_one_record` |
+| Each record contains the required fields | ✅ Pass | `test_step_returns_the_new_record_with_the_current_state`, `test_state_always_matches_the_last_record` |
+| Record values match a hand calculation | ✅ Pass | `test_record_values_match_a_hand_calculation` |
+| Limited thrust is recorded as the thrust actually used | ✅ Pass | `test_limited_thrust_is_recorded_as_thrust_actually_used` |
+| Records keep growing without a limit | ✅ Pass | `test_records_keep_growing_without_a_limit` (720001 records), `test_earlier_records_never_change_when_more_are_added` |
+| Rejected operations add no records | ✅ Pass | `test_rejected_thrust_adds_no_records` (NaN, ±Inf), `test_rejected_run_adds_no_records` |
+
+**Earlier scenarios now complete** (strict xfail markers removed in `cccecfd`; all pass):
+- US-1 "Maximum thrust of 0 N is accepted": `test_max_thrust_zero_keeps_drone_on_ground_with_zero_thrust_used` (IQ-1).
+- US-2 "Run N steps shortcut", "Running 0 steps does nothing", "Invalid N is rejected": the record comparisons (IQ-2).
+- US-3 thrust used recorded after limits, records unchanged after rejected thrust, zero acceleration and drag on rest, landing and no-bounce records (I-2).
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| `RecordLog` storage (D-5) | One `array('d')`, 6 doubles per record, one `extend` per step | Code inspection; byte comparisons in US-2/US-6 tests |
+| `RecordLog` | `len(records) == step_count + 1`, never empty (time-0 record) | Count tests (1, 251, 720001) |
+| `RecordLog` | Append-only: earlier records never change | `test_earlier_records_never_change_when_more_are_added` |
+| `RecordLog` view | Read-only `Sequence[Record]`: negative index, slices, `IndexError` out of range, no item assignment; an earlier view sees new records; `column(name)` returns a tuple | View tests and `test_column_returns_one_field_as_a_series` (all 6 fields) |
+| `Record` | Immutable `NamedTuple` with fields `time, altitude, velocity, acceleration, thrust_used, drag` | `test_records_and_record_fields_cannot_be_changed`, `_fields` check |
+| `Record.time` | `i / 200` from the step count | Every record checked in the 250-step test, sampled every 1000 in the 720000-step test |
+| Time-0 record (I-3) | At rest on the ground gives literal +0.0 in every field; otherwise `drag = -(b*v0)`, `a = ((0 - m*g) + drag) / m` | Time-0 tests (hand values, −0.0 case, edge cases) |
+| Floor/rest record (I-2) | Altitude, velocity, acceleration and drag exactly 0; thrust used as applied | US-3 rest, landing and no-bounce record tests |
+| `Simulation` | Time, altitude and velocity are read from the last record (single source of truth) | `test_state_always_matches_the_last_record` |
+| `step()` | Returns the new `Record` | `test_step_returns_the_new_record_with_the_current_state` |
+| Concurrency | Not thread-safe, no locking; a step appends all 6 values in one call | Inspection |
+
+### Open Questions Raised This Pass
+
+| ID | Question | Status | Resolution |
+|---|---|---|---|
+| IQ-3 | After US-3, which story comes next? (a) US-4, following DESIGN.md order; (b) US-6. | Resolved | "US-6 next, because it turns the 12 expected failures into real checks and lets US-4 compare records directly." |
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- Stories are implemented out of DESIGN.md order: US-6 before US-4 and US-5. Caused by IQ-3: "US-6 next, because it turns the 12 expected failures into real checks and lets US-4 compare records directly."
+- The interim deviations logged for US-2 and US-3 are now closed. The state is read from the last record, `step()` returns the `Record`, and every scenario that waited for records is fully covered.
+
+### Version Control Actions
+
+- Branch: `feature/us6-output-records`
+- Commits:
+  - `f5f660d` docs(approval): move US-3 implementation approval to history
+  - `cccecfd` test(records): add failing US-6 output record acceptance tests (red, before code; also removes the 12 xfail markers)
+  - `03788a4` feat(records): add in-memory output records
+  - docs(implementation): log the US-6 implementation pass (this entry and the signed approval entry)
+- PR: opened against `main` after the docs commit, merged with a merge commit (pass signed by the operator before the docs commit)
+
+---
+
 ## Pass: 2026-11-14 — US-3 Compute vertical dynamics from gravity, thrust and drag
 
 **Branch:** `feature/us3-vertical-dynamics`

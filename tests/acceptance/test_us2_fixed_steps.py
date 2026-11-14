@@ -14,12 +14,6 @@ import pytest
 
 from kuava_sim import SimConfig, Simulation
 
-# IQ-2 (a): records arrive with US-6. Remove this marker when they do.
-needs_records = pytest.mark.xfail(
-    strict=True,
-    reason="IQ-2 (a): needs records from US-6; remove this marker when US-6 lands",
-)
-
 # Config from the US-6 hand-calculation scenario: the drone is moving, so
 # altitude and velocity change every step once dynamics exist.
 MOVING = dict(
@@ -126,7 +120,6 @@ def test_run_1_is_exactly_one_step():
     assert state_bits(batch) == state_bits(single)
 
 
-@needs_records
 def test_run_200_gives_same_records_as_200_single_steps():
     single, batch = make(), make()
     for _ in range(200):
@@ -159,7 +152,6 @@ def test_run_0_with_thrust_does_not_change_held_command():
     assert sim.held_thrust == 15.0
 
 
-@needs_records
 def test_run_0_leaves_the_11_records_unchanged():
     sim = ten_steps_done()
     before = record_bits(sim)
@@ -190,7 +182,6 @@ def test_invalid_n_is_rejected_and_state_unchanged(n, error):
     assert sim.held_thrust == 15.0
 
 
-@needs_records
 @pytest.mark.parametrize("n", [-1, 2.5])
 def test_invalid_n_leaves_records_unchanged(n):
     sim = ten_steps_done()
