@@ -58,6 +58,7 @@ class LiveSession:
         self.values = {name: start for name, (_, _, start) in SLIDERS.items()}
         self._frame_times = deque()  # frame times within the last second
         self.paused = False
+        self.message = ""  # the error message shown, "" if none
         self._start(now)
 
     def _start(self, now: float) -> None:
@@ -111,6 +112,7 @@ class LiveSession:
     def resume(self, now: float) -> None:
         """Carry on from the paused state; no simulated time passed while paused."""
         self.paused = False
+        self.message = ""
         self._anchor(now)
 
     def toggle_pause(self, now: float) -> None:
@@ -125,7 +127,21 @@ class LiveSession:
         Plots and metrics start again and no gust is acting; the pause state
         stays as it was (OQ-37).
         """
+        self.message = ""
         self._start(now)
+
+    def fail(self, exc: BaseException) -> None:
+        """An error while running: pause and keep a plain message (D-23).
+
+        Never raises and never prints.
+        """
+        self.paused = True
+        if isinstance(exc, (ValueError, TypeError, RuntimeError)) and str(exc):
+            self.message = str(exc)  # already names the setting (Rounds 1 and 2)
+        elif str(exc):
+            self.message = f"Unexpected error: {exc}"
+        else:
+            self.message = f"Unexpected error ({type(exc).__name__})"
 
     def tick(self, now: float) -> int:
         """Take the steps due by the wall clock (pacing predicate); return how many."""

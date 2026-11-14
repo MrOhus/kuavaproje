@@ -63,6 +63,7 @@ class App:
         self.session = LiveSession(clock())
         root.title("Drone altitude — live PID simulation")
         root.protocol("WM_DELETE_WINDOW", self.close)
+        root.report_callback_exception = self._on_callback_error  # no traceback (D-23)
         self._build_sliders()
         self._build_plots()
         self._build_table()
@@ -135,19 +136,26 @@ class App:
         self.pause_button.pack(side=tk.RIGHT, padx=4)
         self.fps_label = tk.Label(status, text="0 fps", width=8, anchor="w")
         self.fps_label.pack(side=tk.LEFT)
+        self.error_label = tk.Label(status, text="", fg="red", anchor="w")
+        self.error_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
     # --- input ----------------------------------------------------------------
+
+    def _on_callback_error(self, exc_type, exc, tb) -> None:
+        """Tk reports errors in button, slider and key callbacks here."""
+        self.session.fail(exc)
+        self._draw_status()
 
     def _on_gust(self) -> None:
         self.session.press_gust()
 
     def _on_pause(self) -> None:
         self.session.toggle_pause(self.clock())
-        self._draw_buttons()
+        self._draw_status()
 
     def _on_reset(self) -> None:
         self.session.reset(self.clock())
-        self._draw_buttons()
+        self._draw_status()
 
     def _on_setpoint_release(self, event=None) -> None:
         self.session.release_setpoint(self.sliders["setpoint"].get())
@@ -165,13 +173,14 @@ class App:
         session.tick(now)
         self._draw_plots()
         self._draw_table()
-        self._draw_buttons()
+        self._draw_status()
         self.fps_label.configure(text=f"{session.fps(now)} fps")
 
-    def _draw_buttons(self) -> None:
-        paused = self.session.paused
-        self.pause_button.configure(text="Resume" if paused else "Pause")
-        self.gust_button.configure(state=tk.DISABLED if paused else tk.NORMAL)
+    def _draw_status(self) -> None:
+        session = self.session
+        self.pause_button.configure(text="Resume" if session.paused else "Pause")
+        self.gust_button.configure(state=tk.DISABLED if session.paused else tk.NORMAL)
+        self.error_label.configure(text=session.message)
 
     def _draw_table(self) -> None:
         rows = [format_row(m) for m in self.session.metrics_rows()]
@@ -213,7 +222,11 @@ class App:
 
     def _loop(self) -> None:
         start = self.clock()
-        self.frame()
+        try:
+            self.frame()
+        except Exception as exc:  # shown in the window, never printed (D-23)
+            self.session.fail(exc)
+            self._draw_status()
         elapsed_ms = (self.clock() - start) * 1000.0
         self._job = self.root.after(max(1, int(FRAME_INTERVAL_MS - elapsed_ms)), self._loop)
 
