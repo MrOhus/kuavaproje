@@ -4,6 +4,67 @@ Append one entry per implementation pass (one story per pass), **most recent fir
 
 ---
 
+## Pass: 2026-11-14 — US-2 Advance the simulation in fixed time steps
+
+**Branch:** `feature/us2-fixed-time-steps`
+**Traces to:** `docs/design/DESIGN.md` (US-2), `docs/architecture/ARCHITECTURE.md` (Entity: Simulation — `step`, `run`, `step_count`, `time`; Constants; decisions D-3 time formula, D-6 API shape)
+**Approval basis:** Requirement Analysis entry approved 13.11.2026; Solution Architecture entry approved 14.11.2026 (see `docs/APPROVAL_LOG.md`)
+
+**Files:** `src/kuava_sim/simulation.py`, `tests/acceptance/test_us2_fixed_steps.py`.
+**Red proof:** the tests were committed in `7583605` before any production code (19 failed, 4 strict xfail for records). `git diff 7583605 -- tests/` is empty after green.
+**Result:** 105 passed, 5 xfailed (strict: 1 from IQ-1, 4 from IQ-2). Python 3.15.2, pytest 9.2.0. The wall-clock pause test takes about 10 s by design. As the operator asked, no planted-bug check was run.
+
+### Acceptance Criteria Coverage
+
+All tests are in `tests/acceptance/test_us2_fixed_steps.py`.
+
+| Scenario | Status | Test(s) |
+|---|---|---|
+| Each step advances simulated time by exactly one fixed step | ✅ Pass | `test_new_simulation_starts_at_time_zero`, `test_one_step_advances_time_by_one_fixed_step` |
+| Simulated time is derived from the step count without drift | ✅ Pass | `test_720000_steps_give_3600_s_without_drift` |
+| The simulation never stops by itself | ✅ Pass | `test_simulation_keeps_stepping_after_720000_steps` |
+| Run N steps shortcut | ⚠️ Partial | State: `test_run_200_gives_same_state_as_200_single_steps`, `test_run_1_is_exactly_one_step` ✅. Records: `test_run_200_gives_same_records_as_200_single_steps` strict xfail until US-6 (IQ-2) |
+| Running 0 steps does nothing and is not an error | ⚠️ Partial | `test_run_0_leaves_state_and_time_unchanged`, `test_run_0_with_thrust_does_not_change_held_command` ✅. `test_run_0_leaves_the_11_records_unchanged` strict xfail until US-6 (IQ-2) |
+| Invalid N for "run N steps" is rejected | ⚠️ Partial | `test_invalid_n_is_rejected_and_state_unchanged` (−1, 2.5, 200.0, True, "3", None) ✅. `test_invalid_n_leaves_records_unchanged` strict xfail until US-6 (IQ-2) |
+| Step length cannot vary between steps | ✅ Pass | `test_step_length_cannot_be_passed_to_step_or_run` (`dt`, `step_length`, `step_rate_hz`) |
+| Simulation runs as fast as possible, not paced to the wall clock | ✅ Pass | `test_200000_steps_run_without_waiting_on_the_wall_clock` (`time.sleep` patched to fail; under 100 s for 1000 s simulated) |
+| Simulated time is independent of wall-clock time | ✅ Pass | `test_simulated_time_is_independent_of_wall_clock_pauses` (real 10 ms pauses) |
+
+### Predicates / Invariants Matched
+
+| Entity/Predicate | Invariant / Boundary / Concurrency Rule | Verified By |
+|---|---|---|
+| `Simulation.time` | `time = step_count / 200` from the integer count, never a running sum of `DT` | 720000- and 720001-step tests within ε; code inspection |
+| `Simulation.run(n)` | `n` must be an `int` and not a `bool` (otherwise `TypeError`); `n < 0` gives `ValueError`; checked before any change | Invalid-N tests assert unchanged state and held thrust |
+| `Simulation.run(n)` boundary | −1 rejected, 0 pure no-op (a given thrust is not held), 1 equals one `step` | `test_invalid_n_…[-1]`, run-0 tests, `test_run_1_is_exactly_one_step` |
+| `Simulation.run(n)` | Same as `n` calls to `step()`: the thrust applies to the first step and is then held | `test_run_200_gives_same_state_as_200_single_steps` (bytes compared) |
+| D-6 API | No step-length option on `step`/`run` (unexpected keyword gives `TypeError`) | Step-length test |
+| No wall clock | No `time.sleep` or `time.time` in the simulation | Patched `time.sleep`, wall-clock pause test, inspection |
+| Concurrency | Not thread-safe, no locking; instances share no state | Two-instance tests; inspection |
+
+### Open Questions Raised This Pass
+
+| ID | Question | Status | Resolution |
+|---|---|---|---|
+| IQ-2 | Three US-2 scenarios compare records (US-6), the run-N comparison only means much once altitude and velocity change (US-3), and a thrust argument is needed (held command is US-5). Implement only the US-2 part and mark the record tests strict xfail, or add physics and records now? | Resolved | "IQ-2 a": US-2 adds `step`/`run`, step count, time, N checks and a held thrust; record tests are strict xfail until US-6; altitude and velocity stay at their start values until US-3 |
+
+### Deviations From Approved DESIGN/ARCHITECTURE
+
+- The record parts of three US-2 scenarios are strict xfail until US-6. Caused by IQ-2: "IQ-2 a".
+- Interim, caused by IQ-2: `altitude` and `velocity` return the configured start values, and `step()` has no dynamics yet (US-3). The step count is held in `_step_count` instead of being derived from the last record as ARCHITECTURE.md describes (RecordLog arrives with US-6). `step()` stores the thrust command without checking it; the non-finite rejection belongs to the US-3/US-5 ACs. `step()` returns `None` instead of the new `Record` (US-6).
+
+### Version Control Actions
+
+- Branch: `feature/us2-fixed-time-steps`
+- Commits:
+  - `e3b5701` docs(approval): move US-1 implementation approval to history
+  - `7583605` test(steps): add failing US-2 fixed time step acceptance tests (red, before code)
+  - `7d46d24` feat(steps): add fixed-step step() and run(n)
+  - docs(implementation): log the US-2 implementation pass (this entry and the signed approval entry)
+- PR: opened against `main` after this commit, merged with a merge commit (pass signed by the operator before the docs commit)
+
+---
+
 ## Pass: 2026-11-14 — US-1 Configure the simulation
 
 **Branch:** `feature/us1-configure-simulation`
