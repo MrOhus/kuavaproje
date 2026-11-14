@@ -4,13 +4,22 @@
 
 ## Active Entry
 
-### Requirement Analysis — Round 2 PID altitude controller
+_No active entry. The next pipeline stage (solution architecture, Round 2) opens a new `Pending Approval` entry here._
+
+---
+
+## History
+
+<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
+
+### Requirement Analysis — Round 2 PID altitude controller (Approved 14.11.2026)
 
 - **Status**: Approved
 - **Stage**: Requirement Analysis
 - **Session Started**: 2026-11-14
 - **Related Doc(s)**: docs/design/DESIGN_0bfd04e.md (linked from docs/design/DESIGN.md)
 - **Requested By**: Human operator (Ohus)
+- **Landed In**: PR #10 (`docs/round2-pid-controller-requirements`), merge commit `3dbd8e9` on `main`
 - **Decisions / Scope Covered**:
   - Round 2 scope: PID controller with Kp, Ki, Kd and setpoint changeable while running; rise time, overshoot (%), settling time and steady-state error after every setpoint change; match with python-control `step_info` within 2 %.
   - Out of scope: GUI, plots, wind/disturbances, pause and reset, anti-windup, sensor noise (wind, pause, reset and plots planned for Round 3 with the GUI).
@@ -27,13 +36,6 @@
   - OQ-33 — Gains ≥ 0, setpoint ≥ 0 m, no upper limit; a repeat setpoint does nothing; gain changes never start new metrics (option a).
 - **Approved By**: Ohus
 - **Approval Date**: 14.11.2026
-
-
----
-
-## History
-
-<!-- Move closed (Approved/Rejected) entries here, most recent first, once their commit/PR has landed. Keep the Stage field so it's clear which pipeline phase each entry belonged to. -->
 
 ### Implementation — US-4 Deterministic runs and US-5 Open-loop thrust input (Approved 14.11.2026)
 
