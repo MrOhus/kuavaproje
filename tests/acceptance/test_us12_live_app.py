@@ -154,7 +154,6 @@ def test_a_long_stall_never_causes_a_burst_of_catch_up_steps():
 # --- Scenario: The live simulation is the same deterministic simulation -------
 
 
-@pytest.mark.xfail(strict=True, reason="sliders are US-13 and gusts are US-16 (IQ-9 practice)")
 def test_live_run_replays_bit_identically_without_the_gui():
     from kuava_sim import live
 

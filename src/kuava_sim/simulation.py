@@ -14,6 +14,8 @@ STEP_RATE_HZ: int = 200
 DT: float = 1 / STEP_RATE_HZ  # s
 MIN_THRUST: float = 0.0  # N
 DEFAULT_GRAVITY: float = 9.81  # m/s²
+GUST_FORCE: float = 5.0  # N, downward (OQ-35)
+GUST_STEPS: int = 100  # steps a gust lasts (0.5 s)
 
 
 class Record(NamedTuple):
@@ -196,6 +198,11 @@ class Simulation:
         self._kp = self._ki = self._kd = self._setpoint = math.nan
         self._integral = 0.0  # N
         self._changes = []  # (record index, setpoint) per setpoint change
+        self._gust_left = 0  # steps of the current wind gust still to come
+
+    def gust(self) -> None:
+        """Wind gust: 5 N downward on the next 100 steps; a new press restarts it."""
+        self._gust_left = GUST_STEPS
 
     def enable_controller(self, *, kp, ki, kd, setpoint) -> None:
         """Turn the PID controller on; this counts as a setpoint change."""
@@ -348,7 +355,11 @@ class Simulation:
         h, v = data[-5], data[-4]
         t_used = min(max(self._held_thrust, MIN_THRUST), cfg.max_thrust)
         drag = -(cfg.drag_coeff * v)
-        a = ((t_used - m * cfg.gravity) + drag) / m
+        if self._gust_left:  # step with gust (ARCHITECTURE_899eaea.md)
+            a = (((t_used - m * cfg.gravity) + drag) - GUST_FORCE) / m
+            self._gust_left -= 1
+        else:
+            a = ((t_used - m * cfg.gravity) + drag) / m
         v_next = v + a * DT
         h_next = h + v_next * DT
         t = (len(data) // _WIDTH) / STEP_RATE_HZ  # new step count / 200
