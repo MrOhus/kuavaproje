@@ -247,22 +247,24 @@ class Simulation:
 
     def step_metrics(self) -> tuple:
         """One StepMetrics per setpoint change, recomputed from the records so far."""
-        altitude = self._records.column("altitude")
-        last = len(altitude) - 1
-        results = []
-        for j, (k, setpoint) in enumerate(self._changes):
-            end = self._changes[j + 1][0] if j + 1 < len(self._changes) else last
-            h = altitude[k : end + 1]
-            y = [hi - h[0] for hi in h]
-            times = [i / STEP_RATE_HZ for i in range(len(y))]
-            rise_time, overshoot, settling_time = _step_info(y, times)
-            results.append(
-                StepMetrics(
-                    k, k / STEP_RATE_HZ, h[0], setpoint, len(y),
-                    rise_time, overshoot, settling_time, y[-1], setpoint - h[-1],
-                )
-            )
-        return tuple(results)
+        return tuple(self._metrics(j) for j in range(len(self._changes)))
+
+    def last_step_metrics(self):
+        """The newest step_metrics() result, computing only its window (None if none)."""
+        return self._metrics(len(self._changes) - 1) if self._changes else None
+
+    def _metrics(self, j: int) -> StepMetrics:
+        """The result for change j: records from it up to the next change or the latest."""
+        k, setpoint = self._changes[j]
+        end = self._changes[j + 1][0] if j + 1 < len(self._changes) else self.step_count
+        h = self._data[k * _WIDTH + 1 : end * _WIDTH + 2 : _WIDTH]  # altitudes k..end
+        y = [hi - h[0] for hi in h]
+        times = [i / STEP_RATE_HZ for i in range(len(y))]
+        rise_time, overshoot, settling_time = _step_info(y, times)
+        return StepMetrics(
+            k, k / STEP_RATE_HZ, h[0], setpoint, len(y),
+            rise_time, overshoot, settling_time, y[-1], setpoint - h[-1],
+        )
 
     @property
     def controller(self) -> ControllerStatus:
