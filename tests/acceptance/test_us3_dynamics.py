@@ -18,13 +18,6 @@ from kuava_sim import SimConfig, Simulation
 DT = 0.005
 G = 9.81
 
-needs_records = pytest.mark.xfail(
-    strict=True,
-    reason="needs records (acceleration, drag, thrust used) from US-6; "
-    "remove this marker when US-6 lands",
-)
-
-
 def make(**cfg):
     cfg.setdefault("mass", 1.0)
     cfg.setdefault("max_thrust", 30.0)
@@ -203,7 +196,6 @@ def test_thrust_just_inside_limits_is_not_capped():
     )
 
 
-@needs_records
 @pytest.mark.parametrize("cmd, used", [(25.0, 20.0), (-5.0, 0.0), (19.999, 19.999)])
 def test_thrust_used_is_recorded_after_limits(cmd, used):
     sim = make(**THRUST_CFG)
@@ -245,7 +237,6 @@ def test_non_number_thrust_is_rejected_and_nothing_changes(bad):
     assert sim.held_thrust == 5.0
 
 
-@needs_records
 def test_non_finite_thrust_leaves_records_unchanged():
     sim = held_5_n()
     before = list(sim.records)
@@ -273,7 +264,6 @@ def test_resting_on_ground_with_insufficient_thrust():
     assert high.altitude < 100.0
 
 
-@needs_records
 def test_resting_on_ground_records_zero_acceleration_and_drag():
     sim = make(**GROUND)
     sim.run(200, thrust=5.0)
@@ -316,7 +306,6 @@ def test_landing_stops_at_floor_and_run_continues():
     assert within_eps(sim.time, 1.0)
 
 
-@needs_records
 def test_landing_step_records_zero_acceleration_and_drag():
     sim = make(gravity=G, drag_coeff=0.0, initial_altitude=1.0)
     sim.run(200, thrust=0.0)
@@ -339,7 +328,6 @@ def test_landing_at_speed_does_not_bounce():
         assert sim.velocity == 0.0
 
 
-@needs_records
 def test_landing_at_speed_records_zero_acceleration_and_drag():
     sim = make(gravity=G, drag_coeff=0.5, initial_altitude=0.01, initial_velocity=-10.0)
     sim.run(10, thrust=0.0)

@@ -201,13 +201,7 @@ def test_max_thrust_zero_is_accepted():
     assert create(max_thrust=0.0).config.max_thrust == 0.0
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="IQ-1 (a): needs stepping and records from US-2/US-3/US-5/US-6; "
-    "remove this marker when those stories land",
-)
 def test_max_thrust_zero_keeps_drone_on_ground_with_zero_thrust_used():
-    # Second half of the AC: needs stepping and records (see IQ-1).
     sim = create(max_thrust=0.0, initial_altitude=0.0, initial_velocity=0.0)
     sim.run(200, thrust=50.0)
     assert len(sim.records) == 201
